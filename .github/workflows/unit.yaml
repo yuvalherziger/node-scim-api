@@ -1,0 +1,33 @@
+name: Run unit test
+on: [ push ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Generate UUID
+        id: uuid
+        run: echo "uuid=$(uuidgen)" >> $GITHUB_OUTPUT
+
+      - name: Start a MongoDB Atlas container
+        id: tomodo
+        uses: yuvalherziger/tomodo-github-action@v1
+        with:
+          type: "atlas"
+          username: "unittest"
+          password: ${{ steps.uuid.outputs.uuid }}
+
+      - run: npm install
+
+      # Use the tomodo step's output to grab the connection string - and you're done!
+      - name: Run unit tests with coverage
+        run: npm run test-cov
+        env:
+          MONGODB_URI: ${{ steps.tomodo.outputs.connection-string }}

@@ -31,3 +31,4 @@ npm-debug.log*
 Thumbs.db
 
 *.ts.map
+*.js.map

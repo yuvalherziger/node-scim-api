@@ -71,8 +71,10 @@ describe('Users API', () => {
     expect(res.body.id).toBe(userId);
   });
 
-  it('filters users (sw)', async () => {
-    const res = await request(app).get('/scim/Users').query({ filter: 'userName sw "a"' });
+  it('filters users (sw) and supports sorting', async () => {
+    const res = await request(app)
+      .get('/scim/Users')
+      .query({ filter: 'userName sw "a"', sortBy: 'userName', sortOrder: 'descending' });
     expect(res.status).toBe(200);
     expect(res.body.totalResults).toBeGreaterThanOrEqual(1);
     expect(Array.isArray(res.body.Resources)).toBe(true);
@@ -118,6 +120,29 @@ describe('Users API', () => {
     expect(res.body.displayName).toBe('Alice C.');
     expect(res.body.meta.version).toBe('W/"3"');
     etag = 'W/"3"';
+  });
+
+  it('PATCH supports add/remove at root, array push/remove, and object merge', async () => {
+    const res = await request(app)
+      .patch(`/scim/Users/${userId}`)
+      .set('If-Match', etag)
+      .send({
+        schemas: [Schemas.PatchOp],
+        Operations: [
+          { op: 'add', path: '', value: { temp: 1, active: true, emails: [{ value: 'a@x.com' }], name: { givenName: 'Alice' } } },
+          { op: 'add', path: 'emails', value: { value: 'b@x.com' } },
+          { op: 'remove', path: 'emails', value: { value: 'a@x.com' } },
+          { op: 'replace', path: 'name.familyName', value: 'Cooper' },
+          { op: 'remove', path: '', value: { temp: 0 } }
+        ]
+      });
+    expectScim(res);
+    expect(res.status).toBe(200);
+    expect(res.body.active).toBe(true);
+    expect(res.body.emails.length).toBe(1);
+    expect(res.body.name.familyName).toBe('Cooper');
+    expect(res.body.meta.version).toBe('W/"4"');
+    etag = 'W/"4"';
   });
 
   it('deletes user and 404s on repeat', async () => {

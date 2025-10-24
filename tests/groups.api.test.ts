@@ -71,8 +71,10 @@ describe('Groups API', () => {
     expect(res.body.id).toBe(groupId);
   });
 
-  it('filters groups (co)', async () => {
-    const res = await request(app).get('/scim/Groups').query({ filter: 'displayName co "Dev"' });
+  it('filters groups (co) and supports sorting', async () => {
+    const res = await request(app)
+      .get('/scim/Groups')
+      .query({ filter: 'displayName co "Dev"', sortBy: 'displayName', sortOrder: 'descending' });
     expect(res.status).toBe(200);
     expect(res.body.totalResults).toBeGreaterThanOrEqual(1);
     expect(Array.isArray(res.body.Resources)).toBe(true);
@@ -118,6 +120,27 @@ describe('Groups API', () => {
     expect(res.body.displayName).toBe('Devs Team');
     expect(res.body.meta.version).toBe('W/"3"');
     etag = 'W/"3"';
+  });
+
+  it('PATCH supports add/remove at root, array push/remove, and object merge for groups', async () => {
+    const res = await request(app)
+      .patch(`/scim/Groups/${groupId}`)
+      .set('If-Match', etag)
+      .send({
+        schemas: [Schemas.PatchOp],
+        Operations: [
+          { op: 'add', path: '', value: { members: [{ value: 'u1' }], meta: { attributes: { temp: true } } } },
+          { op: 'add', path: 'members', value: { value: 'u2' } },
+          { op: 'remove', path: 'members', value: { value: 'u1' } },
+          { op: 'replace', path: 'meta.attributes.temp', value: false },
+          { op: 'remove', path: '', value: { nonExisting: 1 } }
+        ]
+      });
+    expectScim(res);
+    expect(res.status).toBe(200);
+    expect(res.body.members.length).toBe(1);
+    expect(res.body.meta.version).toBe('W/"4"');
+    etag = 'W/"4"';
   });
 
   it('deletes group and 404s on repeat', async () => {
