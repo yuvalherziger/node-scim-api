@@ -6,6 +6,12 @@
 /build
 /out
 
+# Ignore transpiled artifacts accidentally generated into src
+/src/**/*.js
+/src/**/*.js.map
+/src/**/*.d.ts
+/src/**/*.d.ts.map
+
 # Log files
 *.log
 npm-debug.log*
