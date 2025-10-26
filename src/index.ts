@@ -10,6 +10,7 @@ import { groupsRouter } from './api/group.js';
 import { searchRouter } from './api/search.js';
 import { bulkRouter } from './api/bulk.js';
 import { selfRouter } from './api/self.js';
+import { logger } from './common/logger.js';
 
 const app = express();
 
@@ -28,7 +29,7 @@ app.use('/', bulkRouter);
 app.use('/', selfRouter);
 
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  console.error(err);
+  logger.error('Unhandled error', { error: err });
   res.status(500).type(SCIM_CONTENT_TYPE).send({
     schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
     status: '500',
@@ -41,13 +42,13 @@ const PORT = Number(process.env.SCIM_SERVER_PORT || 3999);
 async function start() {
   await client.connect();
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`SCIM server listening on :${PORT}`);
+    logger.info('SCIM server listening', { port: PORT });
   });
 }
 
 if (process.env.NODE_ENV !== 'test') {
   start().catch((e) => {
-    console.error('Failed to start server', e);
+    logger.error('Failed to start server', { error: e });
     process.exit(1);
   });
 }
