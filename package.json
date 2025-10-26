@@ -1,7 +1,7 @@
 {
   "name": "scim-api",
-  "version": "0.0.0",
-  "description": "A SCIM API implementation in Node.js",
+  "version": "0.1.0",
+  "description": "A SCIM API implementation in Node.js with a MongoDB backend",
   "keywords": [
     "scim"
   ],
