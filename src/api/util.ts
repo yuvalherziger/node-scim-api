@@ -50,7 +50,7 @@ export function listResponse<T>(
 ): ListResponse<T> {
   return {
     schemas: [Schemas.ListResponse],
-    id: `${resourceType}-list-${startIndex}-${count}`,
+    // id: `${resourceType}-list-${startIndex}-${count}`,
     totalResults,
     startIndex,
     itemsPerPage: count,
@@ -271,7 +271,9 @@ function escapeRegExp(s: string): string {
 
 export function etagNumberFrom(header?: string): number | undefined {
   if (!header) return undefined;
-  const m = header.match(/W\/\"(\d+)\"/);
+  const s = header.trim();
+  // Accept: W/"n", "n", bare n, and tolerant to suffix like W/"n-abcdef"
+  const m = s.match(/^\s*(?:W\/)??"?(\d+)(?:-[^"]+)?"?\s*$/i);
   if (!m) return undefined;
   return Number(m[1]);
 }

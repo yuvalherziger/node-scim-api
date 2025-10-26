@@ -10,8 +10,10 @@ const SCIM_BASE_URL = process.env.SCIM_BASE_URL || "http://node-scim-api:3999";
 
 let userSchemaEndpoint = new URL(SCIM_BASE_URL);
 let groupSchemaEndpoint = new URL(SCIM_BASE_URL);
+let enterpriseUserSchemaEndpoint = new URL(SCIM_BASE_URL);
 userSchemaEndpoint.pathname = new URL(`Schemas/${Schemas.User}`, userSchemaEndpoint).pathname;
 groupSchemaEndpoint.pathname = new URL(`Schemas/${Schemas.Group}`, groupSchemaEndpoint).pathname;
+enterpriseUserSchemaEndpoint.pathname = new URL(`Schemas/${Schemas.EnterpriseUser}`, enterpriseUserSchemaEndpoint).pathname;
 
 const userAttributes: SchemaAttribute[] = [
   {
@@ -317,13 +319,43 @@ const groupSchema: Schema = {
   }
 };
 
+const enterpriseUserAttributes: SchemaAttribute[] = [
+  { name: 'employeeNumber', type: 'string', multiValued: false, description: '', required: false, caseExact: false, mutability: 'readWrite', returned: 'default' },
+  { name: 'costCenter', type: 'string', multiValued: false, description: '', required: false, caseExact: false, mutability: 'readWrite', returned: 'default' },
+  { name: 'organization', type: 'string', multiValued: false, description: '', required: false, caseExact: false, mutability: 'readWrite', returned: 'default' },
+  { name: 'division', type: 'string', multiValued: false, description: '', required: false, caseExact: false, mutability: 'readWrite', returned: 'default' },
+  { name: 'department', type: 'string', multiValued: false, description: '', required: false, caseExact: false, mutability: 'readWrite', returned: 'default' },
+  {
+    name: 'manager', type: 'complex', multiValued: false, description: '', required: false, mutability: 'readWrite', returned: 'default', subAttributes: [
+      { name: 'value', type: 'string', multiValued: false, description: '', required: false, caseExact: false, mutability: 'readWrite', returned: 'default' },
+      { name: '$ref', type: 'reference', multiValued: false, description: '', required: false, referenceTypes: ['User'], mutability: 'readWrite', returned: 'default' },
+      { name: 'display', type: 'string', multiValued: false, description: '', required: false, caseExact: false, mutability: 'readWrite', returned: 'default' },
+    ]
+  }
+];
+
+const enterpriseUserSchema: Schema = {
+  schemas: [Schemas.Schema],
+  id: Schemas.EnterpriseUser,
+  name: 'EnterpriseUser',
+  description: 'User Enterprise Extension',
+  attributes: enterpriseUserAttributes,
+  meta: {
+    location: enterpriseUserSchemaEndpoint.toString(),
+    resourceType: 'Schema',
+    lastModified: "2025-10-25T18:51:33.173Z",
+    created: "2025-10-25T18:51:33.173Z"
+  }
+};
+
 const byId: Record<string, Schema> = {
   [Schemas.User]: userSchema,
   [Schemas.Group]: groupSchema,
+  [Schemas.EnterpriseUser]: enterpriseUserSchema,
 };
 
 schemasRouter.get('/Schemas', (_req: Request, res: Response) => {
-  const Resources = [userSchema, groupSchema];
+  const Resources = [userSchema, groupSchema, enterpriseUserSchema];
   res.type(SCIM_CONTENT_TYPE).send({
     schemas: [Schemas.ListResponse],
     totalResults: Resources.length,

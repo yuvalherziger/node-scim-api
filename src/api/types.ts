@@ -174,6 +174,7 @@ export const Schemas = {
   Schema: 'urn:ietf:params:scim:schemas:core:2.0:Schema',
   User: 'urn:ietf:params:scim:schemas:core:2.0:User',
   Group: 'urn:ietf:params:scim:schemas:core:2.0:Group',
+  EnterpriseUser: 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User',
 } as const;
 
 export type CollectionName = 'users' | 'groups';
