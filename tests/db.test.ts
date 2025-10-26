@@ -22,7 +22,7 @@ beforeAll(async () => {
 afterAll(async () => {
   try {
     // Drop the entire test database regardless of test success
-    // await db.dropDatabase();
+    await db.dropDatabase();
   } finally {
     await client.close();
   }

@@ -1,10 +1,18 @@
-import { Router } from 'express';
 import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { Collection, ObjectId } from 'mongodb';
 import { db } from '../common/db.js';
 import type { Group, ListResponse, PatchRequest } from './types.js';
 import { Schemas } from './types.js';
-import { SCIM_CONTENT_TYPE, baseUrlFrom, checkIfMatch, listResponse, parseListParams, scimFilterToMongo, sendError, setCommonHeaders } from './util.js';
+import {
+  baseUrlFrom,
+  checkIfMatch,
+  listResponse,
+  parseListParams,
+  scimFilterToMongo,
+  sendError,
+  setCommonHeaders
+} from './util.js';
 
 export const groupsRouter = Router();
 
@@ -27,7 +35,18 @@ groupsRouter.get('/Groups', async (req: Request, res: Response) => {
   }
   const docs = await cursor.toArray();
   const base = baseUrlFrom(req);
-  const resources = docs.map((d) => ({ ...d, id: String(d._id), schemas: [Schemas.Group], meta: { resourceType: 'Group', created: d.meta?.created || new Date().toISOString(), lastModified: new Date().toISOString(), version: `W/"${d._version ?? 1}"`, location: `${base}/Groups/${d._id}` } }));
+  const resources = docs.map((d) => ({
+    ...d,
+    id: String(d._id),
+    schemas: [Schemas.Group],
+    meta: {
+      resourceType: 'Group',
+      created: d.meta?.created || new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      version: `W/"${d._version ?? 1}"`,
+      location: `${base}/Groups/${d._id}`
+    }
+  }));
   const resp: ListResponse<Group> = listResponse<Group>(base, 'Groups', resources, total, startIndex, count);
   res.status(200).send(resp);
 });
@@ -38,7 +57,18 @@ groupsRouter.get('/Groups/:id', async (req: Request, res: Response) => {
   const doc = await col.findOne({ _id: new ObjectId(req.params.id) });
   if (!doc) return sendError(res, 404, 'Group not found');
   const base = baseUrlFrom(req);
-  const resource = { ...doc, id: String(doc._id), schemas: [Schemas.Group], meta: { resourceType: 'Group', created: doc.meta?.created || new Date().toISOString(), lastModified: new Date().toISOString(), version: `W/"${doc._version ?? 1}"`, location: `${base}/Groups/${doc._id}` } };
+  const resource = {
+    ...doc,
+    id: String(doc._id),
+    schemas: [Schemas.Group],
+    meta: {
+      resourceType: 'Group',
+      created: doc.meta?.created || new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      version: `W/"${doc._version ?? 1}"`,
+      location: `${base}/Groups/${doc._id}`
+    }
+  };
   res.status(200).send(resource);
 });
 
@@ -51,7 +81,12 @@ groupsRouter.post('/Groups', async (req: Request, res: Response) => {
   const result = await collection().insertOne(doc);
   const id = String(result.insertedId);
   const base = baseUrlFrom(req);
-  const resource = { ...doc, id, schemas: [Schemas.Group], meta: { resourceType: 'Group', created: now, lastModified: now, version: 'W/"1"', location: `${base}/Groups/${id}` } };
+  const resource = {
+    ...doc,
+    id,
+    schemas: [Schemas.Group],
+    meta: { resourceType: 'Group', created: now, lastModified: now, version: 'W/"1"', location: `${base}/Groups/${id}` }
+  };
   res.status(201).location(`${base}/Groups/${id}`).send(resource);
 });
 
@@ -68,7 +103,18 @@ groupsRouter.put('/Groups/:id', async (req: Request, res: Response) => {
   const replacement = { ...body, _version: nextVersion, meta: { created: existing.meta?.created || now } };
   await col.replaceOne({ _id: existing._id }, replacement);
   const base = baseUrlFrom(req);
-  const resource = { ...replacement, id: String(existing._id), schemas: [Schemas.Group], meta: { resourceType: 'Group', created: replacement.meta?.created || now, lastModified: now, version: `W/"${nextVersion}"`, location: `${base}/Groups/${existing._id}` } };
+  const resource = {
+    ...replacement,
+    id: String(existing._id),
+    schemas: [Schemas.Group],
+    meta: {
+      resourceType: 'Group',
+      created: replacement.meta?.created || now,
+      lastModified: now,
+      version: `W/"${nextVersion}"`,
+      location: `${base}/Groups/${existing._id}`
+    }
+  };
   res.status(200).send(resource);
 });
 
@@ -122,9 +168,21 @@ groupsRouter.patch('/Groups/:id', async (req: Request, res: Response) => {
   for (const op of body.Operations) applyPatch(doc, op);
   const nextVersion = currentVersion + 1;
   doc._version = nextVersion;
-  await col.updateOne({ _id: existing._id }, { $set: doc });
+  const { _id, ...$set } = doc;
+  await col.updateOne({ _id: existing._id }, { $set });
   const base = baseUrlFrom(req);
-  const resource = { ...doc, id: String(existing._id), schemas: [Schemas.Group], meta: { resourceType: 'Group', created: existing.meta?.created || new Date().toISOString(), lastModified: new Date().toISOString(), version: `W/"${nextVersion}"`, location: `${base}/Groups/${existing._id}` } };
+  const resource = {
+    ...doc,
+    id: String(existing._id),
+    schemas: [Schemas.Group],
+    meta: {
+      resourceType: 'Group',
+      created: existing.meta?.created || new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      version: `W/"${nextVersion}"`,
+      location: `${base}/Groups/${existing._id}`
+    }
+  };
   res.status(200).send(resource);
 });
 

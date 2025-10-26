@@ -12,8 +12,12 @@ describe('Schemas API', () => {
   it('lists schemas', async () => {
     const res = await request(app).get('/scim/Schemas');
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    const ids = res.body.map((s: any) => s.id);
+    expect(res.body.schemas).toContain(Schemas.ListResponse);
+    expect(Array.isArray(res.body.Resources)).toBe(true);
+    expect(res.body.totalResults).toBeGreaterThanOrEqual(2);
+    expect(res.body.itemsPerPage).toBeGreaterThanOrEqual(2);
+    expect(res.body.startIndex).toBe(1);
+    const ids = res.body.Resources.map((s: any) => s.id);
     expect(ids).toEqual(expect.arrayContaining([Schemas.User, Schemas.Group]));
   });
 

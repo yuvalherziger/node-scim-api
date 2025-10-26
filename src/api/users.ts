@@ -168,7 +168,9 @@ usersRouter.patch('/Users/:id', async (req: Request, res: Response) => {
   for (const op of body.Operations) applyPatch(doc, op);
   const nextVersion = currentVersion + 1;
   doc._version = nextVersion;
-  await col.updateOne({ _id: existing._id }, { $set: doc });
+  // Unset the _id field if it's present:
+  const { _id, ...$set } = doc;
+  await col.updateOne({ _id: existing._id }, { $set });
   const base = baseUrlFrom(req);
   const resource = {
     ...doc,

@@ -1,0 +1,24 @@
+### Variables
+@host = localhost
+@port = 3999
+@token = 8FA2411F-5D35-4E19-89BB-D13E9A1A2FAB
+
+### SCIM: GET /Users
+GET http://{{host}}:{{port}}/Users
+Authorization: Bearer {{token}}
+Accept: application/scim+json
+
+### SCIM: GET /Groups
+GET http://{{host}}:{{port}}/Users
+Authorization: Bearer {{token}}
+Accept: application/scim+json
+
+### SCIM: GET /ServiceProviderConfig
+GET http://{{host}}:{{port}}/ServiceProviderConfig
+Authorization: Bearer {{token}}
+Accept: application/scim+json
+
+### SCIM: GET /ResourceTypes
+GET http://{{host}}:{{port}}/ResourceTypes
+Authorization: Bearer {{token}}
+Accept: application/scim+json

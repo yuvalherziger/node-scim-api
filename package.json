@@ -5,6 +5,13 @@
   "keywords": [
     "scim"
   ],
+  "scripts": {
+    "test": "jest",
+    "test-cov": "jest --coverage",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+  },
   "homepage": "https://github.com/yuvalherziger/node-scim-api#readme",
   "bugs": {
     "url": "https://github.com/yuvalherziger/node-scim-api/issues"
@@ -17,13 +24,6 @@
   "author": "Yuval Herziger <yuvalhrz@gmail.com>",
   "type": "module",
   "main": "src/index.ts",
-  "scripts": {
-    "test": "jest",
-    "test-cov": "jest --coverage",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
-  },
   "dependencies": {
     "express": "^5.1.0",
     "mongodb": "^6.20.0"

@@ -25,7 +25,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   try {
-    // await db.dropDatabase();
+    await db.dropDatabase();
   } finally {
     await client.close();
   }

@@ -104,18 +104,19 @@ export interface ResourceType extends ScimResource {
   description?: string;
   schema: string; // core schema URN
   schemaExtensions?: Array<{ schema: string; required: boolean }>;
+  meta: ScimMeta;
 }
 
 export interface SchemaAttribute {
   name: string;
   type: 'string' | 'boolean' | 'decimal' | 'integer' | 'dateTime' | 'reference' | 'binary' | 'complex';
   multiValued: boolean;
-  description?: string;
-  required?: boolean;
+  description: string;
+  required: boolean;
   canonicalValues?: string[];
   caseExact?: boolean;
-  mutability?: 'readOnly' | 'readWrite' | 'immutable' | 'writeOnly';
-  returned?: 'always' | 'never' | 'default' | 'request';
+  mutability: 'readOnly' | 'readWrite' | 'immutable' | 'writeOnly';
+  returned: 'always' | 'never' | 'default' | 'request';
   uniqueness?: 'none' | 'server' | 'global';
   referenceTypes?: string[];
   subAttributes?: SchemaAttribute[];

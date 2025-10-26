@@ -12,9 +12,12 @@ describe('ResourceTypes API', () => {
   it('lists resource types', async () => {
     const res = await request(app).get('/scim/ResourceTypes');
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThanOrEqual(2);
-    expect(res.body[0].schemas).toContain(Schemas.ResourceType);
+    expect(res.body.schemas).toContain(Schemas.ListResponse);
+    expect(Array.isArray(res.body.Resources)).toBe(true);
+    expect(res.body.totalResults).toBeGreaterThanOrEqual(2);
+    expect(res.body.itemsPerPage).toBeGreaterThanOrEqual(2);
+    expect(res.body.startIndex).toBe(1);
+    expect(res.body.Resources[0].schemas).toContain(Schemas.ResourceType);
   });
 
   it('gets Users resource type', async () => {

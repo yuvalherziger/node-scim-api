@@ -32,7 +32,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).type(SCIM_CONTENT_TYPE).send({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '500', detail: 'Internal Server Error' });
 });
 
-const PORT = Number(process.env.PORT || 3000);
+const PORT = Number(process.env.SCIM_SERVER_PORT || 3999);
 
 async function start() {
   await client.connect();

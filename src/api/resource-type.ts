@@ -6,6 +6,13 @@ import { SCIM_CONTENT_TYPE } from './util.js';
 
 export const resourceTypesRouter = Router();
 
+const SCIM_BASE_URL = process.env.SCIM_BASE_URL || "http://node-scim-api:3999";
+
+let usersEndpoint = new URL(SCIM_BASE_URL);
+let groupsEndpoint = new URL(SCIM_BASE_URL);
+usersEndpoint.pathname = new URL("ResourceTypes/Users", usersEndpoint).pathname;
+groupsEndpoint.pathname = new URL("ResourceTypes/Groups", groupsEndpoint).pathname;
+
 const usersType: ResourceType = {
   schemas: [Schemas.ResourceType],
   id: 'Users',
@@ -13,6 +20,12 @@ const usersType: ResourceType = {
   endpoint: '/Users',
   description: 'User Account',
   schema: Schemas.User,
+  meta: {
+    location: usersEndpoint.toString(),
+    resourceType: 'ResourceType',
+    lastModified: "2025-10-25T18:51:33.173Z",
+    created: "2025-10-25T18:51:33.173Z"
+  }
 };
 
 const groupsType: ResourceType = {
@@ -22,21 +35,34 @@ const groupsType: ResourceType = {
   endpoint: '/Groups',
   description: 'Group',
   schema: Schemas.Group,
+  meta: {
+    location: groupsEndpoint.toString(),
+    resourceType: 'ResourceType',
+    lastModified: "2025-10-25T18:51:33.173Z",
+    created: "2025-10-25T18:51:33.173Z"
+  }
 };
 
 const map: Record<string, ResourceType> = {
-  Users: usersType,
-  Groups: groupsType,
+  users: usersType,
+  groups: groupsType,
 };
 
 resourceTypesRouter.get('/ResourceTypes', (_req: Request, res: Response) => {
-  res.type(SCIM_CONTENT_TYPE).send([usersType, groupsType]);
+  const Resources = [usersType, groupsType];
+  res.type(SCIM_CONTENT_TYPE).send({
+    schemas: [Schemas.ListResponse],
+    totalResults: Resources.length,
+    startIndex: 1,
+    itemsPerPage: Resources.length,
+    Resources,
+  });
 });
 
 resourceTypesRouter.get('/ResourceTypes/:id', (req: Request, res: Response) => {
   let r: ResourceType | undefined;
   if (req.params.id) {
-    r = map[req.params.id];
+    r = map[req.params.id.toLowerCase()];
   }
   if (!r) {
     return res.status(404).type(SCIM_CONTENT_TYPE).send({
