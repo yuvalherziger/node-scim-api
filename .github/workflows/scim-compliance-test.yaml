@@ -1,0 +1,146 @@
+name: SCIM Compliance Test
+on: [ push ]
+
+env:
+  NODE_VERSION: 22
+  SCIM_TESTER_PORT: 8081
+  SCIM_SERVER_PORT: 3999
+  SCIM_COMPLIANCE_TEST_UTIL_VERSION: 1.0.2
+
+jobs:
+  build-scim-utility:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v5
+
+      - name: Install Java and Maven
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk maven
+
+      - name: Build suvera/scim2-compliance-test-utility
+        run: |
+          git clone https://github.com/suvera/scim2-compliance-test-utility.git
+          cd scim2-compliance-test-utility
+          mvn -B -q clean install
+
+      - name: Upload SCIM compliance utility jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: scim2-compliance-test-utility-jar
+          path: scim2-compliance-test-utility/target/scim2-compliance-test-utility-${{ env.SCIM_COMPLIANCE_TEST_UTIL_VERSION }}.jar
+
+  scim-compliance:
+    needs: build-scim-utility
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Generate Inputs
+        id: generate-inputs
+        run: |
+          echo "mongopwd=$(uuidgen)" >> $GITHUB_OUTPUT
+          echo "scim-bearer=$(uuidgen)" >> $GITHUB_OUTPUT
+
+      - name: Start a MongoDB Atlas container
+        id: tomodo
+        uses: yuvalherziger/tomodo-github-action@v1
+        with:
+          type: "atlas"
+          username: "compliancetest"
+          password: ${{ steps.generate-inputs.outputs.mongopwd }}
+
+      - name: Prepare SCIM compliance test utility
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk
+          git clone https://github.com/suvera/scim2-compliance-test-utility.git
+          mkdir -p scim2-compliance-test-utility/target
+      
+      - name: Download SCIM compliance utility jar
+        uses: actions/download-artifact@v4
+        with:
+          name: scim2-compliance-test-utility-jar
+          path: scim2-compliance-test-utility/target
+
+      - name: Run scim2-compliance-test-utility
+        run: |
+          set -euo pipefail
+          cd scim2-compliance-test-utility
+          
+          nohup java -Djava.net.preferIPv4Stack=true -Dserver.port=${{ env.SCIM_TESTER_PORT }} -jar target/scim2-compliance-test-utility-${{ env.SCIM_COMPLIANCE_TEST_UTIL_VERSION }}.jar \
+          >/tmp/scim2-compliance.log 2>&1 &
+          echo $! >/tmp/scim2-compliance.pid
+          
+          for i in {1..30}; do
+          if ! kill -0 "$(cat /tmp/scim2-compliance.pid)" 2>/dev/null; then
+            echo "SCIM compliance utility process exited prematurely." >&2
+            echo "--- Last 200 log lines ---" && tail -n 200 /tmp/scim2-compliance.log || true
+            exit 1
+          fi
+          
+          if curl -fsS http://localhost:${{ env.SCIM_TESTER_PORT }}/ >/dev/null 2>&1; then
+            echo "SCIM compliance utility is up."
+            break
+          fi
+          sleep 1
+          
+          if [ "$i" -eq 30 ]; then
+            echo "Timed out waiting for SCIM compliance utility on :${{ env.SCIM_TESTER_PORT }}" >&2
+            echo "--- Last 200 log lines ---" && tail -n 200 /tmp/scim2-compliance.log || true
+            exit 1
+          fi
+          done
+
+      - name: Install SCIM server dependencies
+        run: npm install
+
+      - name: Build SCIM server
+        run: npm run build
+
+      - name: Run the SCIM server
+        run: |
+          set -euo pipefail
+          
+          nohup npm run start >/tmp/scim-server.log 2>&1 &
+          echo $! >/tmp/scim-server.pid
+          
+          for i in {1..60}; do
+            if ! kill -0 "$(cat /tmp/scim-server.pid)" 2>/dev/null; then
+              echo "SCIM server process exited prematurely." >&2
+              echo "--- Last 200 log lines ---" && tail -n 200 /tmp/scim-server.log || true
+              exit 1
+            fi
+          
+            if curl -fsS \
+              -H "Authorization: Bearer ${{ steps.generate-inputs.outputs.scim-bearer }}" \
+              -H "Accept: application/scim+json" \
+              "http://localhost:${{ env.SCIM_SERVER_PORT }}/ServiceProviderConfig" >/dev/null 2>&1; then
+              echo "SCIM server is up."
+              break
+            fi
+            sleep 1
+          
+            if [ "$i" -eq 60 ]; then
+              echo "Timed out waiting for SCIM server on :${{ env.SCIM_SERVER_PORT }}" >&2
+              echo "--- Last 200 log lines ---" && tail -n 200 /tmp/scim-server.log || true
+              exit 1
+            fi
+          done
+        env:
+          MONGODB_URI: ${{ steps.tomodo.outputs.connection-string }}
+          SCIM_BEARER_TOKEN: ${{ steps.generate-inputs.outputs.scim-bearer }}
+
+      - name: Run SCIM compliance test
+        run: npm run test-scim-compliance
+        env:
+          SCIM_BEARER_TOKEN: ${{ steps.generate-inputs.outputs.scim-bearer }}
+          SCIM_TESTER_BASE_URL: http://localhost:${{ env.SCIM_TESTER_PORT }}
+          SCIM_SERVER_BASE_URL: http://localhost:${{ env.SCIM_SERVER_PORT }}

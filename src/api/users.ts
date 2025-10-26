@@ -101,7 +101,8 @@ usersRouter.put('/Users/:id', async (req: Request, res: Response) => {
   const nextVersion = currentVersion + 1;
   const now = new Date().toISOString();
   const replacement = { ...body, _version: nextVersion, meta: { created: existing.meta?.created || now } };
-  await col.replaceOne({ _id: existing._id }, replacement);
+  const { _id, ...withoutId } = replacement;
+  await col.replaceOne({ _id: existing._id }, withoutId);
   const base = baseUrlFrom(req);
   const resource = {
     ...replacement,

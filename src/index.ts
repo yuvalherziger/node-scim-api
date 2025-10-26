@@ -1,5 +1,5 @@
+import type { NextFunction, Request, Response } from 'express';
 import express from 'express';
-import type { Request, Response, NextFunction } from 'express';
 import { client } from './common/db.js';
 import { requireBearer, SCIM_CONTENT_TYPE } from './api/util.js';
 import { serviceProviderConfigRouter } from './api/service-provider-config.js';
@@ -29,14 +29,18 @@ app.use('/', selfRouter);
 
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
-  res.status(500).type(SCIM_CONTENT_TYPE).send({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '500', detail: 'Internal Server Error' });
+  res.status(500).type(SCIM_CONTENT_TYPE).send({
+    schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+    status: '500',
+    detail: 'Internal Server Error'
+  });
 });
 
 const PORT = Number(process.env.SCIM_SERVER_PORT || 3999);
 
 async function start() {
   await client.connect();
-  app.listen(PORT, () => {
+  app.listen(PORT, "0.0.0.0", () => {
     console.log(`SCIM server listening on :${PORT}`);
   });
 }

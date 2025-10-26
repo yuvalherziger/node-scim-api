@@ -26,7 +26,6 @@ jobs:
 
       - run: npm install
 
-      # Use the tomodo step's output to grab the connection string - and you're done!
       - name: Run unit tests with coverage
         run: npm run test-cov
         env:

@@ -1,7 +1,7 @@
 ### Variables
 @host = localhost
 @port = 3999
-@token = 8FA2411F-5D35-4E19-89BB-D13E9A1A2FAB
+@token = "<< insert your bearer token here >>"
 
 ### SCIM: GET /Users
 GET http://{{host}}:{{port}}/Users
