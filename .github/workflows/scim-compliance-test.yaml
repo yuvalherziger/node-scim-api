@@ -31,48 +31,8 @@ jobs:
           name: scim2-compliance-test-utility-jar
           path: scim2-compliance-test-utility/target/scim2-compliance-test-utility-${{ env.SCIM_COMPLIANCE_TEST_UTIL_VERSION }}.jar
 
-  build-scim-server:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v5
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build SCIM server
-        run: npm run build
-
-      - name: Upload SCIM server dist
-        uses: actions/upload-artifact@v4
-        with:
-          name: scim-server-dist
-          path: dist
-
-  start-mongo:
-    runs-on: ubuntu-latest
-    outputs:
-      connection-string: ${{ steps.tomodo.outputs.connection-string }}
-    steps:
-      - name: Generate Mongo password
-        id: generate-mongo
-        run: echo "mongopwd=$(uuidgen)" >> $GITHUB_OUTPUT
-
-      - name: Start a MongoDB Atlas container
-        id: tomodo
-        uses: yuvalherziger/tomodo-github-action@v1
-        with:
-          type: "atlas"
-          username: "compliancetest"
-          password: ${{ steps.generate-mongo.outputs.mongopwd }}
-
   scim-compliance:
-    needs: [build-scim-utility, build-scim-server, start-mongo]
+    needs: build-scim-utility
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
@@ -86,7 +46,16 @@ jobs:
       - name: Generate Inputs
         id: generate-inputs
         run: |
+          echo "mongopwd=$(uuidgen)" >> $GITHUB_OUTPUT
           echo "scim-bearer=$(uuidgen)" >> $GITHUB_OUTPUT
+
+      - name: Start a MongoDB Atlas container
+        id: tomodo
+        uses: yuvalherziger/tomodo-github-action@v1
+        with:
+          type: "atlas"
+          username: "compliancetest"
+          password: ${{ steps.generate-inputs.outputs.mongopwd }}
 
       - name: Prepare SCIM compliance test utility
         run: |
@@ -117,7 +86,7 @@ jobs:
             exit 1
           fi
           
-          if curl -fsS http://localhost:${{ env.SCIM_TESTER_PORT }}/ >/dev/null 2>&1; then
+          if curl -fsS http://127.0.0.1:${{ env.SCIM_TESTER_PORT }}/ >/dev/null 2>&1; then
             echo "SCIM compliance utility is up."
             break
           fi
@@ -133,11 +102,8 @@ jobs:
       - name: Install SCIM server dependencies
         run: npm install
 
-      - name: Download SCIM server dist
-        uses: actions/download-artifact@v4
-        with:
-          name: scim-server-dist
-          path: dist
+      - name: Build SCIM server
+        run: npm run build
 
       - name: Run the SCIM server
         run: |
@@ -156,7 +122,7 @@ jobs:
             if curl -fsS \
               -H "Authorization: Bearer ${{ steps.generate-inputs.outputs.scim-bearer }}" \
               -H "Accept: application/scim+json" \
-              "http://localhost:${{ env.SCIM_SERVER_PORT }}/ServiceProviderConfig" >/dev/null 2>&1; then
+              "http://127.0.0.1:${{ env.SCIM_SERVER_PORT }}/ServiceProviderConfig" >/dev/null 2>&1; then
               echo "SCIM server is up."
               break
             fi
@@ -169,12 +135,12 @@ jobs:
             fi
           done
         env:
-          MONGODB_URI: ${{ needs.start-mongo.outputs.connection-string }}
+          MONGODB_URI: ${{ steps.tomodo.outputs.connection-string }}
           SCIM_BEARER_TOKEN: ${{ steps.generate-inputs.outputs.scim-bearer }}
 
       - name: Run SCIM compliance test
         run: npm run test-scim-compliance
         env:
           SCIM_BEARER_TOKEN: ${{ steps.generate-inputs.outputs.scim-bearer }}
-          SCIM_TESTER_BASE_URL: http://localhost:${{ env.SCIM_TESTER_PORT }}
-          SCIM_SERVER_BASE_URL: http://localhost:${{ env.SCIM_SERVER_PORT }}
+          SCIM_TESTER_BASE_URL: http://127.0.0.1:${{ env.SCIM_TESTER_PORT }}
+          SCIM_SERVER_BASE_URL: http://127.0.0.1:${{ env.SCIM_SERVER_PORT }}
