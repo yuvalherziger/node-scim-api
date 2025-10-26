@@ -1,4 +1,5 @@
 import axios from "axios";
+import * as fs from "node:fs";
 
 const SCIM_TESTER_BASE_URL = process.env.SCIM_TESTER_BASE_URL || "http://localhost:8081";
 const SCIM_SERVER_BASE_URL = process.env.SCIM_SERVER_BASE_URL || "http://localhost:3999";
@@ -10,6 +11,8 @@ console.log('[SCIM-CT] Config:', {
   hasBearerToken: Boolean(SCIM_BEARER_TOKEN),
   time: new Date().toISOString(),
 });
+
+const MAX_ATTEMPTS = 30;
 
 const expectedTestedActionSuccess = {
   "ServiceProviderConfig": true,
@@ -85,8 +88,8 @@ async function runTests() {
 
   // Poll for status every second up to 60 times
   const statusUrl = `${SCIM_TESTER_BASE_URL}/test/status`;
-  for (let attempt = 0; attempt < 60; attempt++) {
-    console.log(`[SCIM-CT] Polling attempt ${attempt + 1}/60 @ ${new Date().toISOString()}`);
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    console.log(`[SCIM-CT] Polling attempt ${attempt + 1}/${MAX_ATTEMPTS} @ ${new Date().toISOString()}`);
     let resp;
     try {
       resp = await axios.get(statusUrl, {
@@ -119,13 +122,24 @@ async function runTests() {
       return resp.data.data;
     }
 
-    console.log(JSON.stringify(resp.data.data.filter(i => i.success === false && i.exception).map(i => ({exception: i.exception}))[0], null, 2));
+    // console.log(JSON.stringify(resp.data.data.filter(i => i.success === false && i.exception).map(i => ({exception: i.exception}))[0], null, 2));
     console.log('[SCIM-CT] Status payload not ready yet. Sleeping 1s before next poll...');
     await sleep(1000);
   }
 
-  console.error('[SCIM-CT] Polling for test status timed out after 60 seconds');
-  throw new Error('Polling for test status timed out after 60 seconds');
+  console.error(`[SCIM-CT] Polling for test status timed out after ${MAX_ATTEMPTS} seconds`);
+  printLog('/tmp/scim2-compliance.log');
+  throw new Error(`Polling for test status timed out after ${MAX_ATTEMPTS} seconds`);
+}
+
+function printLog(logPath) {
+  if (!logPath) return;
+  try {
+    const log = fs.readFileSync(logPath, 'utf8');
+    console.log(log);
+  } catch (e) {
+    console.error('Failed to read log file:', e && e.message ? e.message : e);
+  }
 }
 
 runTests().then(res => {
