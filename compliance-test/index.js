@@ -32,6 +32,10 @@ const expectedTestedActionSuccess = {
   "Update Group": true,
   "Patch Group": true,
   "Delete Group": true,
+  "/.search on Root Test": true,
+  "/.search on /Users Test": true,
+  "/.search on /Groups Test": true,
+  "/Bulk Test": true,
 };
 
 function sleep(ms) {
@@ -48,7 +52,6 @@ async function assertSuccess(action) {
 }
 
 async function runTests() {
-  // Start the test run using axios with URL-encoded body
   const params = new URLSearchParams();
   params.set('endPoint', SCIM_SERVER_BASE_URL);
   params.set('username', '');
@@ -56,6 +59,8 @@ async function runTests() {
   params.set('jwtToken', SCIM_BEARER_TOKEN);
   params.set('usersCheck', '1');
   params.set('groupsCheck', '1');
+  params.set('searchCheck', '1');
+  params.set('bulkCheck', '1');
   params.set('checkIndResLocation', '1');
 
   const startUrl = `${SCIM_TESTER_BASE_URL}/test/run`;

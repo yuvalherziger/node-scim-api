@@ -97,3 +97,10 @@ curl -sS -H "Authorization: Bearer change-me" \
      -H "Accept: application/scim+json" \
      http://localhost:3999/ServiceProviderConfig | jq .
 ```
+
+## A word of caution
+
+This project **does not implement any MongoDB indexes**, since there are too many permutations to cover all
+filtering scenarios every SCIM client might need. Covering all of them is unsustainable. However, it is strongly
+recommended to create indexes for the most common queries (e.g. `userName`, `emails.value`, `meta.created`, etc.).
+Avoiding index creation is a conscious decision that can have a significant negative impact on performance at scale.
