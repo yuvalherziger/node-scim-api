@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import express from 'express';
+import expressWinston from 'express-winston';
 import { client } from './common/db.js';
 import { requireBearer, SCIM_CONTENT_TYPE } from './api/util.js';
 import { serviceProviderConfigRouter } from './api/service-provider-config.js';
@@ -13,6 +14,15 @@ import { selfRouter } from './api/self.js';
 import { logger } from './common/logger.js';
 
 const app = express();
+
+app.use(expressWinston.logger({
+  winstonInstance: logger,
+  meta: true,
+  msg: "HTTP {{req.method}} {{req.url}}",
+  expressFormat: true,
+  colorize: false,
+  ignoreRoute: (_req, _res) => false
+}));
 
 app.use(express.json({ type: [SCIM_CONTENT_TYPE, 'application/json'] }));
 
@@ -36,6 +46,10 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     detail: 'Internal Server Error'
   });
 });
+
+app.use(expressWinston.errorLogger({
+  winstonInstance: logger
+}));
 
 const PORT = Number(process.env.SCIM_SERVER_PORT || 3999);
 
