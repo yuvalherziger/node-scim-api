@@ -14,11 +14,11 @@ describe('Schemas API', () => {
     expect(res.status).toBe(200);
     expect(res.body.schemas).toContain(Schemas.ListResponse);
     expect(Array.isArray(res.body.Resources)).toBe(true);
-    expect(res.body.totalResults).toBeGreaterThanOrEqual(2);
-    expect(res.body.itemsPerPage).toBeGreaterThanOrEqual(2);
+    expect(res.body.totalResults).toBeGreaterThanOrEqual(3);
+    expect(res.body.itemsPerPage).toBeGreaterThanOrEqual(3);
     expect(res.body.startIndex).toBe(1);
     const ids = res.body.Resources.map((s: any) => s.id);
-    expect(ids).toEqual(expect.arrayContaining([Schemas.User, Schemas.Group]));
+    expect(ids).toEqual(expect.arrayContaining([Schemas.User, Schemas.Group, Schemas.EnterpriseUser]));
   });
 
   it('gets User schema by id', async () => {

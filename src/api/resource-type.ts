@@ -20,6 +20,9 @@ const usersType: ResourceType = {
   endpoint: '/Users',
   description: 'User Account',
   schema: Schemas.User,
+  schemaExtensions: [
+    { schema: Schemas.EnterpriseUser, required: false }
+  ],
   meta: {
     location: usersEndpoint.toString(),
     resourceType: 'ResourceType',

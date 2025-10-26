@@ -64,6 +64,31 @@ describe('Users API', () => {
     expect(res.body.meta.version).toBe('W/"1"');
   });
 
+  it('creates a user with enterprise extension and round-trips it', async () => {
+    const payload = {
+      schemas: [Schemas.User, Schemas.EnterpriseUser],
+      userName: 'bob',
+      displayName: 'Bob',
+      [Schemas.EnterpriseUser]: {
+        employeeNumber: '12345',
+        department: 'Engineering',
+        manager: { value: 'some-user-id', display: 'Manager Name' }
+      }
+    } as any;
+    const res = await request(app).post('/scim/Users').send(payload);
+    expectScim(res);
+    expect(res.status).toBe(201);
+    expect(res.body.schemas).toEqual(expect.arrayContaining([Schemas.User, Schemas.EnterpriseUser]));
+    expect(res.body[Schemas.EnterpriseUser]).toBeDefined();
+    expect(res.body[Schemas.EnterpriseUser].employeeNumber).toBe('12345');
+
+    const getRes = await request(app).get(`/scim/Users/${res.body.id}`);
+    expectScim(getRes);
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.schemas).toEqual(expect.arrayContaining([Schemas.User, Schemas.EnterpriseUser]));
+    expect(getRes.body[Schemas.EnterpriseUser]?.department).toBe('Engineering');
+  });
+
   it('gets the user by id', async () => {
     const res = await request(app).get(`/scim/Users/${userId}`);
     expectScim(res);

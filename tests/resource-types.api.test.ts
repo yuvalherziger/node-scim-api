@@ -25,6 +25,11 @@ describe('ResourceTypes API', () => {
     expect(res.status).toBe(200);
     expect(res.body.id).toBe('Users');
     expect(res.body.schemas).toContain(Schemas.ResourceType);
+    expect(res.body.schemaExtensions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ schema: Schemas.EnterpriseUser, required: false })
+      ])
+    );
   });
 
   it('404s for unknown resource type', async () => {
