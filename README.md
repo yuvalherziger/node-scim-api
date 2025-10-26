@@ -5,15 +5,17 @@
 <a href="https://github.com/yuvalherziger/node-scim-api/releases"><img src="https://img.shields.io/github/v/release/yuvalherziger/node-scim-api?label=Latest&color=d914d2&logo=git&logoColor=d914d2" alt="Release"></a>
 <a href="https://github.com/yuvalherziger/node-scim-api/actions/workflows/build-image.yml"><img src="https://img.shields.io/github/actions/workflow/status/yuvalherziger/node-scim-api/build-image.yml?logo=docker&label=Docker&color=blue" alt="Docker Image"></a>
 
-## Intro
+## Intro    
 
-A lightweight SCIM 2.0 server built with Express and backed by MongoDB. It exposes standard SCIM endpoints (ServiceProviderConfig, Schemas, ResourceTypes, Users, Groups, Search, Bulk, and /Me) and secures requests with a bearer token.
+A lightweight SCIM 2.0 server built with Express and backed by MongoDB.
+It exposes standard SCIM endpoints (ServiceProviderConfig, Schemas, ResourceTypes, Users, Groups, Search, Bulk, and /Me)
+and secures requests with a bearer token.
 
 ## Requirements
 
-- Node.js 20+ (LTS recommended)
-- MongoDB 8.0+, reachable from the server
-- npm 9+
+- Node.js 20+ (LTS recommended), unless running with Docker.
+- MongoDB 8.0+, reachable from the server. Check out [tomodo.dev](https://tomodo.dev) for an easy way to spin up a
+  MongoDB instance.
 - Docker 24+ (optional, for containerized runs)
 
 ## Configuration
@@ -54,10 +56,30 @@ curl -sS -H "Authorization: Bearer change-me" \
 
 ## Build and run with Docker
 
-Build the image and run the container:
+You can pull the image from GHCR:
+
+```shell
+docker pull ghcr.io/yuvalherziger/node-scim-api:latest
+```
+
+...and then run it:
+
+```shell
+docker run --rm \
+  -e MONGODB_URI="mongodb://host.docker.internal:27017/?directConnection=true" \
+  -e DB_NAME="scim" \
+  -e SCIM_BEARER_TOKEN="change-me" \
+  -e SCIM_SERVER_PORT=3999 \
+  -p 3999:3999 \
+  ghcr.io/yuvalherziger/node-scim-api:latest
+```
+
+Alternatively, you can build the image locally:
+
 ```bash
 docker build -t node-scim-api .
 
+# ... and run this image:
 docker run --rm \
   -e MONGODB_URI="mongodb://host.docker.internal:27017/?directConnection=true" \
   -e DB_NAME="scim" \
@@ -65,6 +87,7 @@ docker run --rm \
   -e SCIM_SERVER_PORT=3999 \
   -p 3999:3999 \
   node-scim-api
+
 ```
 
 Quick check:
