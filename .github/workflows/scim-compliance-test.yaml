@@ -137,6 +137,7 @@ jobs:
         env:
           MONGODB_URI: ${{ steps.tomodo.outputs.connection-string }}
           SCIM_BEARER_TOKEN: ${{ steps.generate-inputs.outputs.scim-bearer }}
+          SCIM_BASE_URL: http://127.0.0.1:${{ env.SCIM_SERVER_PORT }}
 
       - name: Run SCIM compliance test
         run: npm run test-scim-compliance
