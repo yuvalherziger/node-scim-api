@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "node-scim-api.fullname" . }}
+  labels:
+    {{- include "node-scim-api.labels" . | nindent 4 }}
+data:
+  {{- $scim := index .Values "scim-server" | default (dict) }}
+
+  {{/* Explicit SCIM server variables from values */}}
+  {{- if hasKey $scim "logLevel" }}
+  {{- if $scim.logLevel }}
+  LOG_LEVEL: {{ $scim.logLevel | quote }}
+  {{- end }}
+  {{- end }}
+
+  {{- if hasKey $scim "dbName" }}
+  {{- if $scim.dbName }}
+  DB_NAME: {{ $scim.dbName | quote }}
+  {{- end }}
+  {{- end }}
+
+  {{- if hasKey $scim "port" }}
+  {{- if $scim.port }}
+  SCIM_SERVER_PORT: {{ $scim.port | quote }}
+  {{- end }}
+  {{- end }}
+
+  {{- if hasKey $scim "baseUrl" }}
+  {{- if $scim.baseUrl }}
+  SCIM_BASE_URL: {{ $scim.baseUrl | quote }}
+  {{- end }}
+  {{- end }}
+
+  {{/* MONGODB_URI: prefer explicit scim-server.mongodbUri; else compute from db settings when available */}}
+  {{- if $scim.mongodbUri }}
+  MONGODB_URI: {{ $scim.mongodbUri | quote }}
+  {{- else if .Values.db.externalUri }}
+  MONGODB_URI: {{ .Values.db.externalUri | quote }}
+  {{- else if .Values.db.provision }}
+  {{- $svc := printf "%s-mongodb" (include "node-scim-api.fullname" .) -}}
+  {{- $host := printf "%s.%s.svc.cluster.local" $svc .Release.Namespace -}}
+  {{- $user := .Values.db.username -}}
+  {{- $pass := .Values.db.password -}}
+  {{- $db := .Values.db.name -}}
+  {{- $userEnc := urlquery $user -}}
+  {{- $passEnc := urlquery $pass -}}
+  MONGODB_URI: {{ printf "mongodb://%s:%s@%s:%d/%s?authSource=admin&directConnection=true" $userEnc $passEnc $host (int .Values.db.port) $db | quote }}
+  {{- end }}
+
+  {{/* Ensure DB_NAME exists one way or another */}}
+  {{- if not (hasKey $scim "dbName") }}
+  DB_NAME: {{ .Values.db.name | default "scim" | quote }}
+  {{- else if not $scim.dbName }}
+  DB_NAME: {{ .Values.db.name | default "scim" | quote }}
+  {{- end }}

@@ -11,6 +11,13 @@ A lightweight SCIM 2.0 server built with Express and backed by MongoDB.
 It exposes standard SCIM endpoints (ServiceProviderConfig, Schemas, ResourceTypes, Users, Groups, Search, Bulk, and /Me)
 and secures requests with a bearer token.
 
+# Deployment options
+
+There are three recommended ways to deploy this SCIM API:
+
+- [Helm chart](./deploy/helm/README.md).
+- [Bare Kubernetes resources](./deploy/kubernetes/README.md) (in development).
+
 ## Requirements
 
 - Node.js 20+ (LTS recommended), unless running with Docker.

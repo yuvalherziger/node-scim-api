@@ -1,0 +1,89 @@
+# Example values for local Minikube testing
+# These values are tailored for running locally with Minikube.
+# Key highlights:
+# - Service type is NodePort so you can access the API from the host
+# - A fixed nodePort (30999) is set so the URL is predictable: http://$(minikube ip):30999
+# - In-cluster MongoDB is provisioned for quick start
+
+scim-server:
+  replicaCount: 1
+  port: 3999
+  dbName: "scim"
+  logLevel: "info"
+  # baseUrl: "http://$(minikube ip):30999"  # optionally set for links in responses
+  # mongodbUri: ""  # if bringing your own DB instead of provisioning
+  image:
+    repository: ghcr.io/yuvalherziger/node-scim-api
+    tag: latest
+    pullPolicy: IfNotPresent
+    # pullSecrets: []  # e.g. [{ name: "ghcr" }]
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+service:
+  type: NodePort
+  port: 3999
+  # Set a fixed nodePort within Minikube's NodePort range (typically 30000-32767)
+  nodePort: 30999
+
+ingress:
+  enabled: false
+
+
+# Secret management for SCIM_BEARER_TOKEN
+# For development, you may let the chart create a Secret. Prefer creating it with kubectl otherwise.
+secret:
+  create: false
+  name: node-scim-api-secret
+  data: {}
+  # Example (testing only):
+  # create: true
+  # name: node-scim-api-secret
+  # data:
+  #   SCIM_BEARER_TOKEN: "change-me"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+probe:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  readiness:
+    enabled: true
+    initialDelaySeconds: 3
+    periodSeconds: 10
+
+podAnnotations: {}
+podLabels: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Provision an in-cluster MongoDB for local testing
+# The chart will auto-derive MONGODB_URI for the API.
+db:
+  provision: true
+  username: scim
+  password: scim
+  name: scim
+  image: "mongodb/mongodb-atlas-local:latest"
+  port: 27017
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

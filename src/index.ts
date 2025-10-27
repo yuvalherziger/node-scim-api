@@ -21,10 +21,16 @@ app.use(expressWinston.logger({
   msg: "HTTP {{req.method}} {{req.url}}",
   expressFormat: true,
   colorize: false,
-  ignoreRoute: (_req, _res) => false
+  // Skip logging for health checks to reduce noise
+  ignoreRoute: (req, _res) => req.path === '/healthy'
 }));
 
 app.use(express.json({ type: [SCIM_CONTENT_TYPE, 'application/json'] }));
+
+// Public health endpoint (no authentication)
+app.get('/healthy', (_req: Request, res: Response) => {
+  res.status(200).json({ healthy: true });
+});
 
 const token = process.env.SCIM_BEARER_TOKEN;
 app.use(requireBearer(token));

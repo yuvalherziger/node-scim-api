@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-scim-api
+  labels:
+    app: node-scim-api
+spec:
+  # Adjust replicas as needed for your environment
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-scim-api
+  template:
+    metadata:
+      labels:
+        app: node-scim-api
+    spec:
+      containers:
+        - name: node-scim-api
+          image: ghcr.io/yuvalherziger/node-scim-api:latest # Change if you publish your own image
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3999 # SCIM server port
+          env:
+            # Non-sensitive env vars come from ConfigMap
+            - name: SCIM_SERVER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: node-scim-api-config
+                  key: SCIM_SERVER_PORT
+            - name: SCIM_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: node-scim-api-config
+                  key: SCIM_BASE_URL
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: node-scim-api-config
+                  key: LOG_LEVEL
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: node-scim-api-config
+                  key: DB_NAME
+            - name: MONGODB_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: node-scim-api-config
+                  key: MONGODB_URI
+            # Sensitive secret: bearer token for auth
+            - name: SCIM_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: node-scim-api-secret
+                  key: SCIM_BEARER_TOKEN
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          # If the app writes logs to stdout/stderr, no extra config is needed
+      # Use default namespace unless you apply these into another namespace

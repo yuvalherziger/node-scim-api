@@ -1,0 +1,19 @@
+apiVersion: v2
+name: node-scim-api
+description: A Helm chart for deploying the Node.js based SCIM API
+home: https://github.com/yuvalherziger/node-scim-api
+maintainers:
+  - name: node-scim-api-maintainers
+    url: https://github.com/yuvalherziger/node-scim-api
+keywords:
+  - node
+  - scim
+  - api
+  - kubernetes
+  - helm
+sources:
+  - https://github.com/yuvalherziger/node-scim-api
+kubeVersion: ">=1.22.0-0"
+type: application
+version: 0.3.0
+appVersion: "latest"
