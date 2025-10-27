@@ -1,0 +1,55 @@
+name: Publish Helm Chart
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'deploy/helm/**'
+      - '.github/workflows/publish-helm-chart.yaml'
+
+env:
+  CHART_DIR: 'deploy/helm'
+  REGISTRY: ghcr.io
+  # The final OCI path will be oci://ghcr.io/<OWNER>/<REPOSITORY>
+jobs:
+  publish-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Required to push to GHCR
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      # Log in to the Container registry (GHCR)
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # Uses the automatically generated GITHUB_TOKEN
+
+      # 1. Package the Helm Chart
+      - name: Package Helm Chart
+        run: |
+          # Package the chart in CHART_DIR and save the output file name
+          helm package ${{ env.CHART_DIR }}
+          CHART_TGZ=$(ls -t *.tgz | head -n 1) # Find the latest created .tgz file
+          echo "PACKAGED_CHART_FILE=$CHART_TGZ" >> $GITHUB_ENV
+
+      # 2. Push the packaged chart to GHCR as an OCI artifact
+      - name: Push Chart to GHCR
+        run: |
+          # The push command uploads the packaged .tgz file to the OCI registry
+          helm push ${{ env.PACKAGED_CHART_FILE }} oci://${{ env.REGISTRY }}/${{ github.repository }}
+
+      - name: Log OCI location
+        run: |
+          CHART_NAME=$(helm show chart ${{ env.CHART_DIR }} | grep '^name:' | awk '{print $2}')
+          CHART_VERSION=$(helm show chart ${{ env.CHART_DIR }} | grep '^version:' | awk '{print $2}')
+          echo "OCI Location: oci://${{ env.REGISTRY }}/${{ github.repository }}/${CHART_NAME}:${CHART_VERSION}"
