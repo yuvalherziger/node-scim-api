@@ -13,7 +13,7 @@ and secures requests with a bearer token.
 
 # Deployment options
 
-There are three recommended ways to deploy this SCIM API:
+Two recommended ways to deploy this SCIM API:
 
 - [Helm chart](./deploy/helm/README.md).
 - [Bare Kubernetes resources](./deploy/kubernetes/README.md) (in development).
