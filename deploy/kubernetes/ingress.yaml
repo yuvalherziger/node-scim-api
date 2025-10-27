@@ -1,0 +1,30 @@
+# Optional Ingress resource. Uncomment and customize to expose the service externally.
+# Requires an Ingress controller (e.g., NGINX Ingress) to be installed in the cluster.
+# For Minikube, enable with: minikube addons enable ingress
+#
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: node-scim-api
+#   labels:
+#     app: node-scim-api
+#   annotations:
+#     # Example annotations for NGINX Ingress Controller
+#     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#     - host: scim.local.test # Change to your domain
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: node-scim-api
+#                 port:
+#                   number: 3999
+#   tls:
+#     - hosts:
+#         - scim.local.test # Change to your domain
+#       secretName: node-scim-api-tls # Provide a TLS secret if using HTTPS

@@ -1,0 +1,26 @@
+{{- /*
+Optional Ingress resource (commented out by default).
+To enable, create your own template or uncomment and adapt this example.
+This chart also provides values under .Values.ingress to guide configuration.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "node-scim-api.fullname" . }}
+  labels:
+    {{- include "node-scim-api.labels" . | nindent 4 }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: scim.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "node-scim-api.fullname" . }}
+                port:
+                  number: {{ .Values.service.port }}
+*/ -}}

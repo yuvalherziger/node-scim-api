@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-scim-api
+  labels:
+    app: node-scim-api
+spec:
+  # For cloud clusters keep ClusterIP (default). For Minikube you can switch to NodePort.
+  type: ClusterIP # Change to NodePort for Minikube
+  selector:
+    app: node-scim-api
+  ports:
+    - name: http
+      port: 3999
+      targetPort: 3999
+      # nodePort: 30999 # Uncomment and set when type=NodePort (Minikube). Must be within your cluster's NodePort range.

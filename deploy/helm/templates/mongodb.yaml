@@ -1,0 +1,58 @@
+{{- if .Values.db.provision }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "node-scim-api.fullname" . }}-mongodb
+  labels:
+    {{- include "node-scim-api.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: mongodb
+      port: {{ .Values.db.port }}
+      targetPort: mongodb
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: {{ include "node-scim-api.name" . }}-mongodb
+    app.kubernetes.io/instance: {{ .Release.Name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "node-scim-api.fullname" . }}-mongodb
+  labels:
+    {{- include "node-scim-api.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "node-scim-api.name" . }}-mongodb
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "node-scim-api.name" . }}-mongodb
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: mongodb
+          image: {{ .Values.db.image | quote }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mongodb
+              containerPort: {{ .Values.db.port }}
+          env:
+            - name: MONGODB_INITDB_ROOT_USERNAME
+              value: {{ .Values.db.username | quote }}
+            - name: MONGODB_INITDB_ROOT_PASSWORD
+              value: {{ .Values.db.password | quote }}
+          resources:
+            {{- toYaml .Values.db.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+      volumes:
+        - name: data
+          emptyDir: {}
+{{- end }}

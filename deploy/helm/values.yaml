@@ -1,0 +1,116 @@
+# Default values for node-scim-api Helm chart.
+# All values can be overridden via -f values.yaml or --set flags.
+
+nameOverride: ""
+fullnameOverride: ""
+
+scim-server:
+  replicaCount: 1
+  # Explicit SCIM server configuration mapped to environment variables
+  # - port -> SCIM_SERVER_PORT
+  # - baseUrl -> SCIM_BASE_URL
+  # - mongodbUri -> MONGODB_URI
+  # - dbName -> DB_NAME
+  # - logLevel -> LOG_LEVEL
+  port: 3999
+  baseUrl: ""
+  mongodbUri: ""
+  dbName: "scim"
+  logLevel: "info"
+  image:
+    repository: ghcr.io/yuvalherziger/node-scim-api
+    tag: latest
+    pullPolicy: IfNotPresent
+    # pullSecrets: [] # e.g. [{ name: "ghcr" }]
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+service:
+  type: ClusterIP # Minikube override: NodePort
+  port: 3999
+  # nodePort: null # set only when service.type=NodePort
+
+# SCIM server configuration block controls all non-secret settings passed
+# to the application via environment variables. See scim-server above.
+
+# Secret environment variables for the application.
+# These will be stored in a Secret when secret.create=true and
+# exposed as env vars to the container. The primary secret is
+# SCIM_BEARER_TOKEN.
+#
+# SECURITY NOTE: Avoid committing real secrets into values files.
+# Prefer creating the Secret separately with kubectl and setting
+# secret.create=false to consume an existing secret.
+secret:
+  create: false
+  name: node-scim-api-secret
+  # data map is used only when secret.create=true. Keys are env var names.
+  # Example (commented out):
+  # data:
+  #   SCIM_BEARER_TOKEN: "change-me"
+  data: {}
+
+# When you do not create the Secret via Helm (secret.create=false),
+# ensure a Secret with the above name exists containing SCIM_BEARER_TOKEN.
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: scim.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  # - secretName: scim-tls
+  #   hosts:
+  #     - scim.example.com
+
+# Pod-wide settings
+podAnnotations: {}
+podLabels: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Liveness / Readiness probes
+# The app serves on service.port; basic TCP probes by default.
+# Adjust to HTTP probes when endpoint is known (e.g., /v2/health if available).
+probe:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  readiness:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+# Database configuration
+# Choose between providing your own MongoDB connection string (db.externalUri)
+# or provisioning an in-cluster MongoDB using the mongodb/mongodb-atlas-local image.
+db:
+  provision: false
+  # When provision=false, you can provide an external connection string here
+  # unless you set env.MONGODB_URI directly.
+  externalUri: ""
+  # Settings for provisioned MongoDB (used when db.provision=true)
+  image: "mongodb/mongodb-atlas-local:latest"
+  port: 27017
+  username: "scim"
+  password: "scim"
+  name: "scim"  # database name
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

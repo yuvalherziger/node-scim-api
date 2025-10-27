@@ -1,0 +1,26 @@
+# Example values for cloud deployments (GKE/EKS/AKS)
+scim-server:
+  replicaCount: 2
+  port: 3999
+  # Set baseUrl to your external URL so links in responses are correct
+  # baseUrl: "https://scim.example.com"
+
+service:
+  type: ClusterIP
+  port: 3999
+
+ingress:
+  enabled: true
+  className: "nginx" # or your ingress class
+  annotations: {}
+  hosts:
+    - host: scim.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  # - secretName: scim-tls
+  #   hosts:
+  #     - scim.example.com
+
+# You likely need to set scim-server.baseUrl to the external URL
