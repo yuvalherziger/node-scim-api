@@ -1,6 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { Schemas } from '../src/api/types';
+import { ObjectId } from 'mongodb';
 
 let app: express.Express;
 let client: any;
@@ -141,6 +142,15 @@ describe('Groups API', () => {
     expect(res.body.members.length).toBe(1);
     expect(res.body.meta.version).toBe('W/"4"');
     etag = 'W/"4"';
+
+    // verify persistence: no embedded members field in groups doc, memberships stored separately
+    const groupsCol = db.collection('groups');
+    const g = await groupsCol.findOne({ _id: new ObjectId(groupId) });
+    expect(g).toBeTruthy();
+    expect(Object.prototype.hasOwnProperty.call(g, 'members')).toBe(false);
+    const mems = await db.collection('groupMemberships').find({ groupId: new ObjectId(groupId) }).toArray();
+    expect(mems.length).toBe(1);
+    expect(mems[0].member.value).toBe('u2');
   });
 
   it('deletes group and 404s on repeat', async () => {
