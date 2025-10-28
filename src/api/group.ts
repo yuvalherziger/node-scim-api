@@ -17,6 +17,7 @@ import {
 export const groupsRouter = Router();
 
 const collection = (): Collection => db.collection('groups');
+const membershipCollection = (): Collection => db.collection('groupMemberships');
 
 function sanitizeGroupInput(input: any): any {
   const { id, meta, schemas, ...rest } = input || {};
@@ -35,9 +36,12 @@ groupsRouter.get('/Groups', async (req: Request, res: Response) => {
   }
   const docs = await cursor.toArray();
   const base = baseUrlFrom(req);
-  const resources = docs.map((d) => {
+  const resources = await Promise.all(docs.map(async (d) => {
     const { _id, ...rest } = d as any;
-    return {
+    // hydrate members from membership collection
+    const memDocs = await membershipCollection().find({ groupId: d._id }).toArray();
+    const members = memDocs.map((m: any) => m.member);
+    const baseObj: any = {
       ...rest,
       id: String(d._id),
       schemas: [Schemas.Group],
@@ -49,7 +53,9 @@ groupsRouter.get('/Groups', async (req: Request, res: Response) => {
         location: `${base}/Groups/${d._id}`
       }
     };
-  });
+    if (members.length > 0) baseObj.members = members;
+    return baseObj;
+  }));
   const resp: ListResponse<Group> = listResponse<Group>(base, 'Groups', resources, total, startIndex, count);
   res.status(200).send(resp);
 });
@@ -61,7 +67,10 @@ groupsRouter.get('/Groups/:id', async (req: Request, res: Response) => {
   if (!doc) return sendError(res, 404, 'Group not found');
   const base = baseUrlFrom(req);
   const { _id: _unused, ...rest } = doc as any;
-  const resource = {
+  // hydrate members
+  const memDocs = await membershipCollection().find({ groupId: doc._id }).toArray();
+  const members = memDocs.map((m: any) => m.member);
+  const resource: any = {
     ...rest,
     id: String(doc._id),
     schemas: [Schemas.Group],
@@ -73,6 +82,7 @@ groupsRouter.get('/Groups/:id', async (req: Request, res: Response) => {
       location: `${base}/Groups/${doc._id}`
     }
   };
+  if (members.length > 0) resource.members = members;
   res.status(200).send(resource);
 });
 
@@ -80,22 +90,30 @@ groupsRouter.post('/Groups', async (req: Request, res: Response) => {
   setCommonHeaders(res);
   const body = sanitizeGroupInput(req.body);
   if (!body.displayName) return sendError(res, 400, 'displayName is required', 'invalidValue');
+  const inputMembers: any[] = Array.isArray(body.members) ? body.members : [];
   // Prevent creating duplicate groups by displayName (case-insensitive)
   const col = collection();
   const existing = await col.findOne({ displayName: body.displayName }, { collation: { locale: 'en', strength: 2 } });
   if (existing) return sendError(res, 409, 'Duplicate displayName', 'uniqueness');
   const now = new Date().toISOString();
-  const doc = { ...body, _version: 1, meta: { created: now } };
+  const { members: _membersIgnored, ...groupBody } = body as any;
+  const doc = { ...groupBody, _version: 1, meta: { created: now } };
   const result = await col.insertOne(doc);
-  const id = String(result.insertedId);
+  const groupObjectId = result.insertedId as ObjectId;
+  // write memberships
+  if (inputMembers.length > 0) {
+    const memCol = membershipCollection();
+    await memCol.insertMany(inputMembers.map((m) => ({ groupId: groupObjectId, member: m })));
+  }
+  const id = String(groupObjectId);
   const base = baseUrlFrom(req);
-  const { _id: _unusedPost, ...postRest } = doc as any;
-  const resource = {
-    ...postRest,
+  const resource: any = {
+    ...doc,
     id,
     schemas: [Schemas.Group],
     meta: { resourceType: 'Group', created: now, lastModified: now, version: 'W/"1"', location: `${base}/Groups/${id}` }
   };
+  if (inputMembers.length > 0) resource.members = inputMembers;
   res.status(201).location(`${base}/Groups/${id}`).send(resource);
 });
 
@@ -107,15 +125,20 @@ groupsRouter.put('/Groups/:id', async (req: Request, res: Response) => {
   const currentVersion = existing._version ?? 1;
   if (!checkIfMatch(req, currentVersion)) return sendError(res, 412, 'Precondition Failed', 'mutability');
   const body = sanitizeGroupInput(req.body);
+  const inputMembers: any[] = Array.isArray((body as any).members) ? (body as any).members : [];
   const nextVersion = currentVersion + 1;
   const now = new Date().toISOString();
-  const replacement = { ...body, _version: nextVersion, meta: { created: existing.meta?.created || now } };
+  const { members: _membersIgnored, ...groupBody } = body as any;
+  const replacement = { ...groupBody, _version: nextVersion, meta: { created: existing.meta?.created || now } };
   const { _id, ...withoutId } = replacement;
   await col.replaceOne({ _id: existing._id }, withoutId);
+  // replace memberships
+  const memCol = membershipCollection();
+  await memCol.deleteMany({ groupId: existing._id });
+  if (inputMembers.length > 0) await memCol.insertMany(inputMembers.map((m) => ({ groupId: existing._id, member: m })));
   const base = baseUrlFrom(req);
-  const { _id: _unusedPut, ...putRest } = replacement as any;
-  const resource = {
-    ...putRest,
+  const resource: any = {
+    ...replacement,
     id: String(existing._id),
     schemas: [Schemas.Group],
     meta: {
@@ -126,6 +149,7 @@ groupsRouter.put('/Groups/:id', async (req: Request, res: Response) => {
       location: `${base}/Groups/${existing._id}`
     }
   };
+  if (inputMembers.length > 0) resource.members = inputMembers;
   res.status(200).send(resource);
 });
 
@@ -228,16 +252,25 @@ groupsRouter.patch('/Groups/:id', async (req: Request, res: Response) => {
   if (!existing) return sendError(res, 404, 'Group not found');
   const currentVersion = existing._version ?? 1;
   if (!checkIfMatch(req, currentVersion)) return sendError(res, 412, 'Precondition Failed', 'mutability');
-  let doc = { ...existing };
+  // hydrate current members into working doc
+  const memCol = membershipCollection();
+  const currentMemDocs = await memCol.find({ groupId: existing._id }).toArray();
+  const currentMembers: any[] = currentMemDocs.map((m: any) => m.member);
+  let doc: any = { ...existing };
+  if (currentMembers.length > 0) doc.members = currentMembers;
   for (const op of body.Operations) applyPatch(doc, op);
   const nextVersion = currentVersion + 1;
   doc._version = nextVersion;
-  const { _id, ...$set } = doc;
+  // persist group doc without members
+  const { _id, members: patchedMembers, ...$set } = doc;
   await col.updateOne({ _id: existing._id }, { $set });
+  // replace memberships to match patched state
+  const newMembers: any[] = Array.isArray(patchedMembers) ? patchedMembers : [];
+  await memCol.deleteMany({ groupId: existing._id });
+  if (newMembers.length > 0) await memCol.insertMany(newMembers.map((m) => ({ groupId: existing._id, member: m })));
   const base = baseUrlFrom(req);
-  const { _id: _unusedPatch, ...patchRest } = doc as any;
-  const resource = {
-    ...patchRest,
+  const resource: any = {
+    ...doc,
     id: String(existing._id),
     schemas: [Schemas.Group],
     meta: {
@@ -256,7 +289,10 @@ groupsRouter.delete('/Groups/:id', async (req: Request, res: Response) => {
   const id = req.params.id;
   if (!id || !ObjectId.isValid(id)) return sendError(res, 404, 'Group not found');
   const col = collection();
-  const r = await col.deleteOne({ _id: new ObjectId(id) });
+  const _id = new ObjectId(id);
+  const r = await col.deleteOne({ _id });
   if (r.deletedCount === 0) return sendError(res, 404, 'Group not found');
+  // cascade delete memberships
+  await membershipCollection().deleteMany({ groupId: _id });
   res.status(204).send();
 });
