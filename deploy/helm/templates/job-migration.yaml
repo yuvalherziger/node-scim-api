@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-scim-migration
+  labels:
+    {{- include "node-scim-api.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.db.provision }}
+    "helm.sh/hook": "post-install,post-upgrade"
+    {{- else }}
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    {{- end }}
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        {{- include "node-scim-api.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- $scim := index .Values "scim-server" | default (dict) }}
+      {{- with (index $scim "image" | default (dict)) }}
+      {{- if .pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .pullSecrets | nindent 8 }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.db.provision }}
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.36.1
+          command:
+            - sh
+            - -c
+            - echo Waiting for MongoDB at {{ printf "%s.%s.svc.cluster.local" (printf "%s-mongodb" (include "node-scim-api.fullname" .)) .Release.Namespace }}:{{ .Values.db.port }}; until nc -z {{ printf "%s.%s.svc.cluster.local" (printf "%s-mongodb" (include "node-scim-api.fullname" .)) .Release.Namespace }} {{ .Values.db.port }}; do echo waiting...; sleep 2; done;
+      {{- end }}
+      restartPolicy: Never
+      containers:
+        - name: migration
+          image: "{{ (index $scim "image").repository }}:{{ (index $scim "image").tag }}"
+          imagePullPolicy: {{ (index $scim "image").pullPolicy }}
+          command: ["npm", "run", "migrate"]
+          envFrom:
+            - configMapRef:
+                name: {{ include "node-scim-api.fullname" . }}
+            - secretRef:
+                name: {{ .Values.secret.name }}
+                optional: true

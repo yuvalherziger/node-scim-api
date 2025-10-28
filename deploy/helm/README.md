@@ -206,6 +206,27 @@ Use the provided cloud values file, which keeps the Service internal (ClusterIP)
 helm template node-scim-api ./deploy/helm
 ```
 
+## Database Migration Job (Helm hook)
+
+This chart includes a one-off database migration Job that runs automatically as a Helm hook:
+
+- Hook phases: pre-install and pre-upgrade
+- Job name: `{{ .Release.Name }}-scim-migration`
+- Image: exactly the same as the main Deployment (`scim-server.image.repository` + `scim-server.image.tag`)
+- Command override: `["npm", "run", "migrate"]`
+- Environment: inherits the same ConfigMap and Secret as the main application pod, so it connects to the same database
+- Pod restart policy: `Never`
+- Hook annotations applied:
+  - `helm.sh/hook: pre-install,pre-upgrade`
+  - `helm.sh/hook-weight: "0"`
+  - `helm.sh/hook-delete-policy: before-hook-creation`
+
+Behavior when provisioning the database (db.provision=true):
+- The migration Job switches to run on post-install/post-upgrade so the DB resources are created first.
+- An initContainer waits for the in-cluster MongoDB Service TCP port to become reachable before running migrations.
+
+This ensures migrations are executed at the appropriate time and wait for the database to be ready when the chart is set to provision MongoDB.
+
 ## Upgrading
 
 ```bash
