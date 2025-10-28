@@ -12,12 +12,25 @@ A lightweight SCIM 2.0 server built with Express and backed by MongoDB.
 It exposes standard SCIM endpoints (ServiceProviderConfig, Schemas, ResourceTypes, Users, Groups, Search, Bulk, and /Me)
 and secures requests with a bearer token.
 
-# Deployment options
+## Key features
+
+- SCIM compliance with the core schemas
+- SCIM compliance with the enterprise schemas for prominent clients (e.g., Microsoft Entra ID)
+
+## Deployment options
 
 Two recommended ways to deploy this SCIM API:
 
 - [Helm chart](./deploy/helm/README.md).
 - [Bare Kubernetes resources](./deploy/kubernetes/README.md) (in development).
+
+## Compliance
+
+In addition to the automated compliance test as part of this tool's CI pipeline, the tool is
+tested against [Microsoft Entra ID SCIM Validator](https://scimvalidator.microsoft.com/) 
+with every release, to ensure de facto compliance with enterprise SCIM provisioners:
+
+<img width="572" height="580" alt="Screenshot 2025-10-28 at 11 13 55" src="https://github.com/user-attachments/assets/e41fc922-3b29-413d-9dda-35854330fb3f" />
 
 ## Requirements
 
