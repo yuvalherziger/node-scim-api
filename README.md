@@ -32,14 +32,16 @@ with every release, to ensure de facto compliance with enterprise SCIM provision
 
 <img width="572" height="580" alt="Screenshot 2025-10-28 at 11 13 55" src="https://github.com/user-attachments/assets/e41fc922-3b29-413d-9dda-35854330fb3f" />
 
-## Requirements
+## Development
+
+### Requirements
 
 - Node.js 20+ (LTS recommended), unless running with Docker.
 - MongoDB 8.0+, reachable from the server. Check out [tomodo.dev](https://tomodo.dev) for an easy way to spin up a
-  MongoDB instance.
-- Docker 24+ (optional, for containerized runs)
+  local MongoDB instance.
+- Docker 24+ (optional, if you prefer running the API in a container)
 
-## Configuration
+### Configuration
 
 Configure via environment variables:
 
@@ -48,7 +50,7 @@ Configure via environment variables:
 - `SCIM_BEARER_TOKEN`: Bearer token required for all requests (no default)
 - `SCIM_SERVER_PORT`: HTTP port to listen on (default: 3999)
 
-## Build and run with Node.js
+### Build and run with Node.js
 
 ```bash
 # Install deps and build
@@ -75,7 +77,7 @@ curl -sS -H "Authorization: Bearer change-me" \
      http://localhost:3999/ServiceProviderConfig | jq .
 ```
 
-## Build and run with Docker
+### Build and run with Docker
 
 You can pull the image from GHCR:
 
