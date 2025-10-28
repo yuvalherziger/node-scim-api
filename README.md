@@ -105,9 +105,16 @@ curl -sS -H "Authorization: Bearer change-me" \
      http://localhost:3999/ServiceProviderConfig | jq .
 ```
 
-## A word of caution
+## A note on MongoDB indexes
 
-This project **does not implement any MongoDB indexes**, since there are too many permutations to cover all
-filtering scenarios every SCIM client might need. Covering all of them is unsustainable. However, it is strongly
-recommended to create indexes for the most common queries (e.g. `userName`, `emails.value`, `meta.created`, etc.).
-Avoiding index creation is a conscious decision that can have a significant negative impact on performance at scale.
+This project implements the required indexes for its default namespaces:
+
+- `scim.users`
+- `scim.groups`
+
+If, for any reason, you change the default database (`scim`), you will need to account for indexes in your `users`
+and `groups` collections.
+
+Please also note that different SCIM clients may use different query filters. Prominent SCIM clients like
+**Azure Entra ID** only filter by `userName` and `externalId` for users, and `displayName` for groups.
+If your SCIM client uses different filters, it's highly recommended that you create indexes for those fields.
