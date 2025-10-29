@@ -1,0 +1,8 @@
+# Ruler Configuration File
+# See https://ai.intellectronica.net/ruler for documentation.
+
+default_agents = ["junie"]
+
+[agents.junie]
+enabled = true
+output_path = ".junie/guidelines.md"

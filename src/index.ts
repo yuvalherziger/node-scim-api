@@ -12,6 +12,7 @@ import { searchRouter } from './api/search.js';
 import { bulkRouter } from './api/bulk.js';
 import { selfRouter } from './api/self.js';
 import { logger } from './common/logger.js';
+import { Schemas } from "./api/types.js";
 
 const app = express();
 
@@ -47,7 +48,7 @@ app.use('/', selfRouter);
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   logger.error('Unhandled error', { error: err });
   res.status(500).type(SCIM_CONTENT_TYPE).send({
-    schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+    schemas: [Schemas.Error],
     status: '500',
     detail: 'Internal Server Error'
   });

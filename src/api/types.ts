@@ -72,7 +72,7 @@ export interface User extends ScimResource {
 export interface GroupMember {
   value: string; // user id or group id
   $ref?: string;
-  type?: 'User' | 'Group';
+  type?: "User" | "Group";
   display?: string;
 }
 
@@ -109,15 +109,15 @@ export interface ResourceType extends ScimResource {
 
 export interface SchemaAttribute {
   name: string;
-  type: 'string' | 'boolean' | 'decimal' | 'integer' | 'dateTime' | 'reference' | 'binary' | 'complex';
+  type: "string" | "boolean" | "decimal" | "integer" | "dateTime" | "reference" | "binary" | "complex";
   multiValued: boolean;
   description: string;
   required: boolean;
   canonicalValues?: string[];
   caseExact?: boolean;
-  mutability: 'readOnly' | 'readWrite' | 'immutable' | 'writeOnly';
-  returned: 'always' | 'never' | 'default' | 'request';
-  uniqueness?: 'none' | 'server' | 'global';
+  mutability: "readOnly" | "readWrite" | "immutable" | "writeOnly";
+  returned: "always" | "never" | "default" | "request";
+  uniqueness?: "none" | "server" | "global";
   referenceTypes?: string[];
   subAttributes?: SchemaAttribute[];
 }
@@ -142,7 +142,7 @@ export interface ErrorResponse extends ScimResource {
   scimType?: string;
 }
 
-export type PatchOpAction = 'add' | 'remove' | 'replace';
+export type PatchOpAction = "add" | "remove" | "replace";
 
 export interface PatchOperation {
   op: PatchOpAction;
@@ -157,24 +157,25 @@ export interface PatchRequest extends ScimResource {
 export interface SearchRequest extends ScimResource {
   filter?: string;
   sortBy?: string;
-  sortOrder?: 'ascending' | 'descending';
-  startIndex?: number; // 1-based
+  sortOrder?: "ascending" | "descending";
+  startIndex?: number;
   count?: number;
   attributes?: string[] | string;
   excludedAttributes?: string[] | string;
 }
 
 export const Schemas = {
-  ListResponse: 'urn:ietf:params:scim:api:messages:2.0:ListResponse',
-  Error: 'urn:ietf:params:scim:api:messages:2.0:Error',
-  PatchOp: 'urn:ietf:params:scim:api:messages:2.0:PatchOp',
-  SearchRequest: 'urn:ietf:params:scim:api:messages:2.0:SearchRequest',
-  ServiceProviderConfig: 'urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig',
-  ResourceType: 'urn:ietf:params:scim:schemas:core:2.0:ResourceType',
-  Schema: 'urn:ietf:params:scim:schemas:core:2.0:Schema',
-  User: 'urn:ietf:params:scim:schemas:core:2.0:User',
-  Group: 'urn:ietf:params:scim:schemas:core:2.0:Group',
-  EnterpriseUser: 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User',
+  ListResponse: "urn:ietf:params:scim:api:messages:2.0:ListResponse",
+  Error: "urn:ietf:params:scim:api:messages:2.0:Error",
+  PatchOp: "urn:ietf:params:scim:api:messages:2.0:PatchOp",
+  SearchRequest: "urn:ietf:params:scim:api:messages:2.0:SearchRequest",
+  ServiceProviderConfig: "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
+  ResourceType: "urn:ietf:params:scim:schemas:core:2.0:ResourceType",
+  Schema: "urn:ietf:params:scim:schemas:core:2.0:Schema",
+  User: "urn:ietf:params:scim:schemas:core:2.0:User",
+  Group: "urn:ietf:params:scim:schemas:core:2.0:Group",
+  EnterpriseUser: "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+  BulkResponse: "urn:ietf:params:scim:api:messages:2.0:BulkResponse",
 } as const;
 
-export type CollectionName = 'users' | 'groups';
+export type CollectionName = "users" | "groups";

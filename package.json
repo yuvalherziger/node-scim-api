@@ -10,7 +10,7 @@
     "test-cov": "jest --coverage",
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "tsx watch src/index.ts",
     "test-scim-compliance": "node compliance-test/index.js",
     "migrate": "node dist/migrations/scripts/migrate.js",
     "generate-migration": "node dist/migrations/scripts/generate-migration.js --name ${npm_config_name:=default}",
@@ -48,6 +48,7 @@
     "supertest": "^6.3.4",
     "ts-jest": "^29.4.5",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }
