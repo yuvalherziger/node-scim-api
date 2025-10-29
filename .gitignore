@@ -35,3 +35,9 @@ Thumbs.db
 # k8s/helm
 deploy/helm/charts/
 values.local.yaml
+
+
+# START Ruler Generated Files
+/.junie/guidelines.md
+/.junie/guidelines.md.bak
+# END Ruler Generated Files

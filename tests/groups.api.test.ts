@@ -153,6 +153,55 @@ describe('Groups API', () => {
     expect(mems[0].member.value).toBe('u2');
   });
 
+  // Additional coverage: create a group with members and test list hydration + filtered path operations
+  let groupId2 = '';
+  let etag2 = 'W/"1"';
+
+  it('creates a group with members and returns members in response', async () => {
+    const res = await request(app).post('/scim/Groups').send({ displayName: 'QA', members: [{ value: 'u1' }, { value: 'u2' }] });
+    expectScim(res);
+    expect(res.status).toBe(201);
+    groupId2 = res.body.id;
+    expect(Array.isArray(res.body.members)).toBe(true);
+    expect(res.body.members.map((m: any) => m.value).sort()).toEqual(['u1', 'u2']);
+    expect(res.body.meta.version).toBe('W/"1"');
+    etag2 = res.body.meta.version;
+
+    // verify memberships were written
+    const mems = await db.collection('groupMemberships').find({ groupId: new ObjectId(groupId2) }).toArray();
+    expect(mems.length).toBe(2);
+  });
+
+  it('lists groups and hydrates members for groups with memberships', async () => {
+    const res = await request(app).get('/scim/Groups');
+    expectScim(res);
+    expect(res.status).toBe(200);
+    const found = res.body.Resources.find((r: any) => r.id === groupId2);
+    expect(found).toBeTruthy();
+    expect(Array.isArray(found.members)).toBe(true);
+    expect(found.members.length).toBe(2);
+  });
+
+  it('PATCH supports SCIM filtered path remove and replace for members', async () => {
+    const res = await request(app)
+      .patch(`/scim/Groups/${groupId2}`)
+      .set('If-Match', etag2)
+      .send({
+        schemas: [Schemas.PatchOp],
+        Operations: [
+          { op: 'remove', path: 'members[value eq "u1"]' },
+          { op: 'replace', path: "members[value eq 'u2']", value: { value: 'u3' } }
+        ]
+      });
+    expectScim(res);
+    expect(res.status).toBe(200);
+    // members should now be only u3
+    expect(res.body.members.map((m: any) => m.value)).toEqual(['u3']);
+    // version bumped
+    expect(res.body.meta.version).toMatch(/^W\/\"\d+\"$/);
+    etag2 = res.body.meta.version;
+  });
+
   it('deletes group and 404s on repeat', async () => {
     const res = await request(app).delete(`/scim/Groups/${groupId}`);
     expect(res.status).toBe(204);
