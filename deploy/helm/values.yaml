@@ -80,6 +80,13 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
+# Optional MongoDB change stream listener sidecar-like Deployment
+# When enabled, a separate Deployment will be created that runs the same image
+# with a different entry point (npm run start:listener). It uses the same
+# ConfigMap and Secret as the SCIM server and always runs exactly one replica.
+change-stream-listener:
+  enabled: false
+
 # Liveness / Readiness probes
 # The app serves on service.port; basic TCP probes by default.
 # Adjust to HTTP probes when endpoint is known (e.g., /v2/health if available).

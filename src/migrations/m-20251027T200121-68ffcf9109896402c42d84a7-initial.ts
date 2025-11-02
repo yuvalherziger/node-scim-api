@@ -67,6 +67,12 @@ export class Migration implements IMigration {
         collection: "groups",
         keys: [{ groupId: 1 }],
       }),
+      new Index({
+        rolling: false,
+        db,
+        collection: "groupMemberships",
+        keys: [{ groupId: 1 }],
+      }),
     ];
     await Promise.all(indexes.map(ix => ix.build(client)));
   }
