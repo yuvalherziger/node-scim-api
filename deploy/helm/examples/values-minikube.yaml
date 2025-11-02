@@ -87,3 +87,7 @@ db:
     limits:
       cpu: 500m
       memory: 512Mi
+
+# Optional: enable the MongoDB change stream listener worker pod
+change-stream-listener:
+  enabled: false

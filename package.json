@@ -10,6 +10,7 @@
     "test-cov": "jest --coverage",
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:listener": "node dist/hooks/listener.js",
     "dev": "tsx watch src/index.ts",
     "test-scim-compliance": "node compliance-test/index.js",
     "migrate": "node dist/migrations/scripts/migrate.js",

@@ -121,6 +121,88 @@ curl -sS -H "Authorization: Bearer change-me" \
      http://localhost:3999/ServiceProviderConfig | jq .
 ```
 
+### Hooks
+
+The SCIM API can emit events to user-defined hooks whenever `Users`, `Groups`, or `Group Memberships` change.
+This lets you integrate SCIM operations with external systems, audit pipelines, or derived data stores.
+
+- Where: see src/hooks/hooks.ts for the hook interface and `src/hooks/listener.ts` for the change-stream listener.
+- How: implement and register your hooks using registerHooks(). The listener will dispatch events to your handlers.
+- Runtime: the listener is a separate long-running process that tails MongoDB change streams.
+
+Available hook events:
+
+- Users: `userCreated`, `userReplaced`, `userUpdated`, `userDeleted`
+- Groups: `groupCreated`, `groupReplaced`, `groupUpdated`, `groupDeleted`
+- Memberships: `membershipAdded`, `membershipRemoved`
+
+Minimal example: write audit entries to another collection
+
+1. Create a file (e.g., src/hooks/registration.ts) and register your hooks:
+
+    ```ts
+    import { db } from "../src/common/db"; // adjust the path if needed
+    import { registerHooks } from "../src/hooks/hooks";
+    
+    // A simple audit writer that stores events in the `auditEvents` collection
+    async function writeAudit(event: string, payload: any) {
+      // TODO: add an index if queries beyond _id are introduced in the future
+      await db.collection("auditEvents").insertOne({
+        event,
+        payload,
+        at: new Date().toISOString(),
+      });
+    }
+    
+    registerHooks({
+      userCreated: async (user) => {
+        await writeAudit("userCreated", { id: user.id, userName: user.userName });
+      },
+      userUpdated: async (user) => {
+        await writeAudit("userUpdated", { id: user.id });
+      },
+      groupCreated: async (group) => {
+        await writeAudit("groupCreated", { id: group.id, displayName: group.displayName });
+      },
+      membershipAdded: async (m) => {
+        await writeAudit("membershipAdded", { groupId: m.groupId, member: m.member?.value });
+      },
+    });
+    ```
+
+2. Make sure this registration module is imported so it executes at runtime. A common pattern is to import it at the top of both the HTTP server entrypoint (src/index.ts) and the listener (src/hooks/listener.ts):
+
+    ```ts
+    // At the very top of src/index.ts
+    import "./hooks/registration";
+    
+    // At the very top of src/hooks/listener.ts
+    import "./registration";
+    ```
+
+    This ensures your hooks are active for both direct mutations performed by the API and the background listener.
+
+**Starting the listener:**
+
+- Build the project and start the listener:
+
+    ```bash
+    npm run build
+    npm run start:listener
+    ```
+
+- Alternatively, when running TypeScript directly in dev, you can start the listener using tsx and the provided entrypoint:
+
+    ```bash
+    START_LISTENER=1 tsx watch src/hooks/listener.ts
+    ```
+
+Notes
+
+- If a hook is not implemented, a HookNotImplemented error will be handled and logged as a warning by the listener.
+- Use the centralized logger (src/common/logger.ts) inside your hooks for better logging.
+
+
 ## A note on MongoDB indexes
 
 This project implements the required indexes for its default namespaces:

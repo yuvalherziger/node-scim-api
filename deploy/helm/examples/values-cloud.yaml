@@ -23,4 +23,8 @@ ingress:
   #   hosts:
   #     - scim.example.com
 
+# Optional: enable the MongoDB change stream listener worker pod
+change-stream-listener:
+  enabled: false
+
 # You likely need to set scim-server.baseUrl to the external URL

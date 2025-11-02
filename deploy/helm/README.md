@@ -54,6 +54,7 @@ them via a values file (-f) or with --set. See values.yaml for the complete list
 | nodeSelector                          | {}                                  | Node selector for pod scheduling.                                                                             |
 | tolerations                           | []                                  | Tolerations for pod scheduling.                                                                               |
 | affinity                              | {}                                  | Affinity/anti-affinity rules.                                                                                 |
+| change-stream-listener.enabled        | false                               | Enable a separate Change Stream Listener pod (fixed 1 replica; uses same image/config).                       |
 | probe.liveness.enabled                | true                                | Enable liveness probe.                                                                                        |
 | probe.liveness.initialDelaySeconds    | 10                                  | Liveness probe initial delay.                                                                                 |
 | probe.liveness.periodSeconds          | 10                                  | Liveness probe period.                                                                                        |
@@ -205,6 +206,15 @@ Use the provided cloud values file, which keeps the Service internal (ClusterIP)
 ```bash
 helm template node-scim-api ./deploy/helm
 ```
+
+## Change Stream Listener (optional)
+
+If you set `change-stream-listener.enabled: true`, the chart deploys a separate Deployment named `<fullname>-listener` that:
+
+- Uses the exact same image as the SCIM server, with a different entry point.
+- Will process MongoDB change events and invoke your hook implementations (assuming you implemented hooks. See [../../README.md](../../README.md)).
+- Inherits the same ConfigMap and Secret as the SCIM server (so it connects to the same DB and config).
+- Always runs a single replica, because distributed MongoDB change streams must process mutually exclusive events.
 
 ## Database Migration Job (Helm hook)
 
