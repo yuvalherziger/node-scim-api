@@ -1,25 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "node-scim-api.fullname" . }}
+  name: {{ include "scim-api.fullname" . }}
   labels:
-    {{- include "node-scim-api.labels" . | nindent 4 }}
+    {{- include "scim-api.labels" . | nindent 4 }}
 spec:
   replicas: {{ index .Values "scim-server" "replicaCount" }}
   selector:
     matchLabels:
-      {{- include "node-scim-api.selectorLabels" . | nindent 6 }}
+      {{- include "scim-api.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "node-scim-api.selectorLabels" . | nindent 8 }}
+        {{- include "scim-api.selectorLabels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.podAnnotations }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
     spec:
       {{- $scim := index .Values "scim-server" | default (dict) }}
       {{- with (index $scim "image" | default (dict)) }}
@@ -29,7 +30,7 @@ spec:
       {{- end }}
       {{- end }}
       containers:
-        - name: {{ include "node-scim-api.name" . }}
+        - name: {{ include "scim-api.name" . }}
           image: "{{ (index $scim "image").repository }}:{{ (index $scim "image").tag }}"
           imagePullPolicy: {{ (index $scim "image").pullPolicy }}
           ports:
@@ -38,7 +39,7 @@ spec:
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: {{ include "node-scim-api.fullname" . }}
+                name: {{ include "scim-api.fullname" . }}
             - secretRef:
                 name: {{ .Values.secret.name }}
           {{- if .Values.probe.liveness.enabled }}

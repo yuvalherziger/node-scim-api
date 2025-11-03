@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name: {{ .Release.Name }}-scim-migration
   labels:
-    {{- include "node-scim-api.labels" . | nindent 4 }}
+    {{- include "scim-api.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.db.provision }}
     "helm.sh/hook": "post-install,post-upgrade"
@@ -17,7 +17,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "node-scim-api.selectorLabels" . | nindent 8 }}
+        {{- include "scim-api.selectorLabels" . | nindent 8 }}
     spec:
       {{- $scim := index .Values "scim-server" | default (dict) }}
       {{- with (index $scim "image" | default (dict)) }}
@@ -33,7 +33,7 @@ spec:
           command:
             - sh
             - -c
-            - echo Waiting for MongoDB at {{ printf "%s.%s.svc.cluster.local" (printf "%s-mongodb" (include "node-scim-api.fullname" .)) .Release.Namespace }}:{{ .Values.db.port }}; until nc -z {{ printf "%s.%s.svc.cluster.local" (printf "%s-mongodb" (include "node-scim-api.fullname" .)) .Release.Namespace }} {{ .Values.db.port }}; do echo waiting...; sleep 2; done;
+            - echo Waiting for MongoDB at {{ printf "%s.%s.svc.cluster.local" (printf "%s-mongodb" (include "scim-api.fullname" .)) .Release.Namespace }}:{{ .Values.db.port }}; until nc -z {{ printf "%s.%s.svc.cluster.local" (printf "%s-mongodb" (include "scim-api.fullname" .)) .Release.Namespace }} {{ .Values.db.port }}; do echo waiting...; sleep 2; done;
       {{- end }}
       restartPolicy: Never
       containers:
@@ -43,7 +43,7 @@ spec:
           command: ["npm", "run", "migrate"]
           envFrom:
             - configMapRef:
-                name: {{ include "node-scim-api.fullname" . }}
+                name: {{ include "scim-api.fullname" . }}
             - secretRef:
                 name: {{ .Values.secret.name }}
                 optional: true

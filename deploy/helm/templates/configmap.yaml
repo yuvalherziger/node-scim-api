@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "node-scim-api.fullname" . }}
+  name: {{ include "scim-api.fullname" . }}
   labels:
-    {{- include "node-scim-api.labels" . | nindent 4 }}
+    {{- include "scim-api.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": "pre-install,pre-upgrade"
     "helm.sh/hook-weight": "-1"
@@ -41,7 +41,7 @@ data:
   {{- else if .Values.db.externalUri }}
   MONGODB_URI: {{ .Values.db.externalUri | quote }}
   {{- else if .Values.db.provision }}
-  {{- $svc := printf "%s-mongodb" (include "node-scim-api.fullname" .) -}}
+  {{- $svc := printf "%s-mongodb" (include "scim-api.fullname" .) -}}
   {{- $host := printf "%s.%s.svc.cluster.local" $svc .Release.Namespace -}}
   {{- $user := .Values.db.username -}}
   {{- $pass := .Values.db.password -}}
