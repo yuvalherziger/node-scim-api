@@ -6,9 +6,9 @@ This chart also provides values under .Values.ingress to guide configuration.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "node-scim-api.fullname" . }}
+  name: {{ include "scim-api.fullname" . }}
   labels:
-    {{- include "node-scim-api.labels" . | nindent 4 }}
+    {{- include "scim-api.labels" . | nindent 4 }}
   annotations:
     kubernetes.io/ingress.class: nginx
 spec:
@@ -20,7 +20,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "node-scim-api.fullname" . }}
+                name: {{ include "scim-api.fullname" . }}
                 port:
                   number: {{ .Values.service.port }}
 */ -}}

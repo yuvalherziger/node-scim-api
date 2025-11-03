@@ -39,11 +39,11 @@ ingress:
 # For development, you may let the chart create a Secret. Prefer creating it with kubectl otherwise.
 secret:
   create: false
-  name: node-scim-api-secret
+  name: scim-api-secret
   data: {}
   # Example (testing only):
   # create: true
-  # name: node-scim-api-secret
+  # name: scim-api-secret
   # data:
   #   SCIM_BEARER_TOKEN: "change-me"
 

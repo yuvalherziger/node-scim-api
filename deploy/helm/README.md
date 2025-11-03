@@ -40,7 +40,7 @@ them via a values file (-f) or with --set. See values.yaml for the complete list
 | service.port                          | 3999                                | Service port.                                                                                                 |
 | service.nodePort                      | null                                | Fixed NodePort when service.type=NodePort. Leave empty to auto-assign.                                        |
 | secret.create                         | false                               | Whether Helm should create the Secret for sensitive env vars. For production, prefer pre-creating the Secret. |
-| secret.name                           | node-scim-api-secret                | Name of the Secret that contains SCIM_BEARER_TOKEN.                                                           |
+| secret.name                           | scim-api-secret                     | Name of the Secret that contains SCIM_BEARER_TOKEN.                                                           |
 | secret.data                           | {}                                  | Key-value map of secret env vars used only when secret.create=true.                                           |
 | ingress.enabled                       | false                               | Enable Kubernetes Ingress.                                                                                    |
 | ingress.className                     | ""                                  | IngressClass to use.                                                                                          |
@@ -82,16 +82,16 @@ You can provide it in one of two ways:
 1. Create the Secret separately (recommended)
 
     ```bash
-    kubectl create secret generic node-scim-api-secret \
+    kubectl create secret generic scim-api-secret \
       --from-literal=SCIM_BEARER_TOKEN='your_token_here'
     ```
 
    Then install the chart with secret.create=false (default) and matching secret.name:
 
     ```bash
-    helm install node-scim-api ./deploy/helm \
+    helm install scim-api ./deploy/helm \
       --set secret.create=false \
-      --set secret.name=node-scim-api-secret
+      --set secret.name=scim-api-secret
     ```
 
 2. Let Helm create the Secret (for testing only)
@@ -101,7 +101,7 @@ You can provide it in one of two ways:
     ```yaml
     secret:
       create: true
-      name: node-scim-api-secret
+      name: scim-api-secret
       data:
         SCIM_BEARER_TOKEN: "your_token_here"
     ```
@@ -123,14 +123,14 @@ Use the provided Minikube values file, which sets service.type=NodePort and a fi
     ```bash
     cp ./deploy/helm/examples/values-minikube.yaml ./deploy/helm/values.local.yaml
     # Option A (recommended): create secret with kubectl
-    kubectl create secret generic node-scim-api-secret -n scim-api \
+    kubectl create secret generic scim-api-secret -n scim-api \
       --from-literal=SCIM_BEARER_TOKEN='your_token_here' || true
     ```
 
 3. Install the chart:
 
     ```bash
-    helm install node-scim-api ./deploy/helm -f ./deploy/helm/values.local.yaml -n scim-api
+    helm install scim-api ./deploy/helm -f ./deploy/helm/values.local.yaml -n scim-api
     ```
 
 4. Accessing the API from your host
@@ -149,10 +149,10 @@ Use the provided Minikube values file, which sets service.type=NodePort and a fi
   ```bash
   # Replace with your namespace and the actual Service name
   # Namespace used in the examples: scim-api
-  # Default Helm fullname: node-scim-api-node-scim-api
-  minikube service -n scim-api node-scim-api-node-scim-api
+  # Default Helm fullname: scim-api-scim-api
+  minikube service -n scim-api scim-api-scim-api
   # or get a raw URL without opening a browser
-  minikube service -n scim-api node-scim-api-node-scim-api --url
+  minikube service -n scim-api scim-api-scim-api --url
   ```
 
 - Alternatively, you can run a network tunnel to expose NodePorts on localhost:
@@ -167,12 +167,12 @@ Use the provided Minikube values file, which sets service.type=NodePort and a fi
 Notes:
 
 - Namespace: the examples below assume `-n scim-api`. Adjust as needed.
-- Service name: the Helm fullname is typically `node-scim-api-node-scim-api` when you install with
-  `helm install node-scim-api ./deploy/helm`. Run `kubectl -n scim-api get svc` to confirm.
+- Service name: the Helm fullname is typically `scim-api-scim-api` when you install with
+  `helm install scim-api ./deploy/helm`. Run `kubectl -n scim-api get svc` to confirm.
 - NodePort choice: Setting a fixed nodePort makes host access predictable. You can change the port as long as it stays
   within 30000-32767.
 - If you prefer, you can omit service.nodePort and let Kubernetes assign one; then use
-  `minikube service -n scim-api node-scim-api-node-scim-api --url` to discover/open it.
+  `minikube service -n scim-api scim-apiscim-api --url` to discover/open it.
 
 ---
 
@@ -184,14 +184,14 @@ Use the provided cloud values file, which keeps the Service internal (ClusterIP)
 
    ```bash
    # Create the Secret (recommended)
-   kubectl create secret generic node-scim-api-secret \
+   kubectl create secret generic scim-api-secret \
      --from-literal=SCIM_BEARER_TOKEN='your_token_here' || true
    ```
 
 2. Install with Ingress enabled
 
    ```bash
-   helm install node-scim-api ./deploy/helm -f ./deploy/helm/examples/values-cloud.yaml
+   helm install scim-api ./deploy/helm -f ./deploy/helm/examples/values-cloud.yaml
    ```
 
 3. Configure DNS/TLS and base URL
@@ -204,7 +204,7 @@ Use the provided cloud values file, which keeps the Service internal (ClusterIP)
 ## Render templates without installing
 
 ```bash
-helm template node-scim-api ./deploy/helm
+helm template scim-api ./deploy/helm
 ```
 
 ## Change Stream Listener (optional)
@@ -240,13 +240,13 @@ This ensures migrations are executed at the appropriate time and wait for the da
 ## Upgrading
 
 ```bash
-helm upgrade node-scim-api ./deploy/helm -f ./deploy/helm/examples/your-values.yaml
+helm upgrade scim-api ./deploy/helm -f ./deploy/helm/examples/your-values.yaml
 ```
 
 ## Uninstalling
 
 ```bash
-helm uninstall node-scim-api
+helm uninstall scim-api
 ```
 
 ## Database Options
@@ -304,7 +304,7 @@ specific environment variables. This chart does not accept arbitrary env vars.
 Keys under scim-server map to env vars as follows:
 
 - scim-server.port -> SCIM_SERVER_PORT (default 3999)
-- scim-server.baseUrl -> SCIM_BASE_URL (default http://node-scim-api:3999)
+- scim-server.baseUrl -> SCIM_BASE_URL (default http://scim-api:3999)
 - scim-server.mongodbUri -> MONGODB_URI (optional when db.provision or db.externalUri provided)
 - scim-server.dbName -> DB_NAME (default scim)
 - scim-server.logLevel -> LOG_LEVEL (default info)

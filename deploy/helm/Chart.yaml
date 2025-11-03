@@ -1,9 +1,9 @@
 apiVersion: v2
-name: node-scim-api
+name: scim-api
 description: A Helm chart for deploying the Node.js based SCIM API
 home: https://github.com/yuvalherziger/node-scim-api
 maintainers:
-  - name: node-scim-api-maintainers
+  - name: Yuval Herziger
     url: https://github.com/yuvalherziger/node-scim-api
 keywords:
   - node
