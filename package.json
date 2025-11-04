@@ -6,8 +6,8 @@
     "scim"
   ],
   "scripts": {
-    "test": "jest",
-    "test-cov": "jest --coverage",
+    "test": "jest --runInBand",
+    "test-cov": "jest --coverage --runInBand",
     "build": "tsc",
     "start": "node dist/index.js",
     "start:listener": "node dist/hooks/listener.js",

@@ -10,6 +10,8 @@ export default {
       },
     ],
   },
+  setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],
+  globalTeardown: '<rootDir>/tests/globalTeardown.ts',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   testRegex: '(/__tests__/.*|\\.(test|spec))\\.(ts|tsx)$',
   moduleNameMapper: {
