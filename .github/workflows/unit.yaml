@@ -30,3 +30,9 @@ jobs:
         run: npm run test-cov
         env:
           MONGODB_URI: ${{ steps.tomodo.outputs.connection-string }}
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: yuvalherziger/node-scim-api
