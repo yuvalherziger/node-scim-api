@@ -220,6 +220,10 @@ export async function startListener(): Promise<{ close: () => Promise<void> } | 
 // or explicitly requested via env var, start the listener service.
 (function maybeStart() {
   try {
+    // In test environment, never auto-start to avoid leaking process handlers/timers in Jest
+    const isTestEnv = typeof process !== "undefined" && process.env && process.env.NODE_ENV === "test";
+    if (isTestEnv) return;
+
     const argv1 = (typeof process !== "undefined" && Array.isArray(process.argv)) ? (process.argv[1] || "") : "";
     const shouldStart =
       (typeof process !== "undefined" && process.env && process.env.START_LISTENER === "1") ||
